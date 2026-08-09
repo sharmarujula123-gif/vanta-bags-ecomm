@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test": "vitest",
+    "test": "vitest --run",
+"test:watch": "vitest",
     "seed": "node src/seed/seed.js"
   },
   "keywords": [],
