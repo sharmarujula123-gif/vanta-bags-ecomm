@@ -1,10 +1,10 @@
 import express from "express";
 
 import {
-    createPayment,
-    verifyPayment,
-    handleWebhook,
-  } from "../controllers/paymentController.js";
+  createPayment,
+  verifyPayment,
+  handleWebhook,
+} from "../controllers/paymentController.js";
 
 import authenticateUser from "../middleware/authenticateUser.js";
 
@@ -21,9 +21,12 @@ router.post(
   authenticateUser,
   verifyPayment
 );
+
+// No authenticateUser here.
+// Razorpay calls this endpoint.
 router.post(
-    "/webhook",
-    handleWebhook
-  );
-  
+  "/webhook",
+  handleWebhook
+);
+
 export default router;
