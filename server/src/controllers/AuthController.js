@@ -6,6 +6,22 @@ import {
   generateRefreshToken,
 } from "../utils/generateToken.js";
 
+const accessTokenCookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+    maxAge: 15 * 60 * 1000,
+  };
+  
+  const refreshTokenCookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -85,19 +101,17 @@ export const login = async (req, res) => {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 15 * 60 * 1000,
-  });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  res.cookie(
+    "accessToken",
+    accessToken,
+    accessTokenCookieOptions
+  );
+  
+  res.cookie(
+    "refreshToken",
+    refreshToken,
+    refreshTokenCookieOptions
+  );
 
   return res.status(200).json({
     success: true,
@@ -163,13 +177,11 @@ export const logout = async (req, res) => {
   
       const newAccessToken = generateAccessToken(user);
   
-      res.cookie("accessToken", newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite:
-          process.env.NODE_ENV === "production" ? "none" : "lax",
-        maxAge: 15 * 60 * 1000,
-      });
+      res.cookie(
+        "accessToken",
+        newAccessToken,
+        accessTokenCookieOptions
+      );
   
       return res.status(200).json({
         success: true,
