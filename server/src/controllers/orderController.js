@@ -286,40 +286,92 @@ export const getAllOrders = async (req, res) => {
     });
   };
   export const cancelMyOrder = async (req, res) => {
-    const order = await Order.findOne({
-      _id: req.params.id,
-      user: req.user._id,
-    });
+    const session = await mongoose.startSession();
   
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
+    try {
+      await session.withTransaction(async () => {
+        const order = await Order.findOne({
+          _id: req.params.id,
+          user: req.user._id,
+        }).session(session);
+  
+        if (!order) {
+          throw new Error("ORDER_NOT_FOUND");
+        }
+  
+        const cancellableStatuses = [
+          "pending",
+          "confirmed",
+          "processing",
+        ];
+  
+        if (!cancellableStatuses.includes(order.orderStatus)) {
+          throw new Error(
+            `CANNOT_CANCEL:${order.orderStatus}`
+          );
+        }
+  
+        // Restore stock
+        for (const item of order.items) {
+          const result = await Product.updateOne(
+            {
+              _id: item.product,
+            },
+            {
+              $inc: {
+                stock: item.quantity,
+              },
+            },
+            { session }
+          );
+  
+          if (result.modifiedCount !== 1) {
+            throw new Error(
+              `STOCK_RESTORE_FAILED:${item.name}`
+            );
+          }
+        }
+  
+        order.orderStatus = "cancelled";
+  
+        await order.save({ session });
       });
-    }
   
-    const cancellableStatuses = [
-      "pending",
-      "confirmed",
-      "processing",
-    ];
-  
-    if (!cancellableStatuses.includes(order.orderStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: `Order cannot be cancelled after it reaches "${order.orderStatus}" status`,
+      return res.status(200).json({
+        success: true,
+        message: "Order cancelled successfully and stock restored",
       });
+    } catch (error) {
+      if (error.message === "ORDER_NOT_FOUND") {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found",
+        });
+      }
+  
+      if (error.message.startsWith("CANNOT_CANCEL:")) {
+        const status = error.message.split(":")[1];
+  
+        return res.status(400).json({
+          success: false,
+          message: `Order cannot be cancelled after it reaches "${status}" status`,
+        });
+      }
+  
+      if (error.message.startsWith("STOCK_RESTORE_FAILED:")) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to restore product stock",
+        });
+      }
+  
+      console.error("Cancel order error:", error);
+  
+      return res.status(500).json({
+        success: false,
+        message: "Failed to cancel order",
+      });
+    } finally {
+      await session.endSession();
     }
-  
-    order.orderStatus = "cancelled";
-  
-    await order.save();
-  
-    return res.status(200).json({
-      success: true,
-      message: "Order cancelled successfully",
-      data: {
-        order,
-      },
-    });
   };
