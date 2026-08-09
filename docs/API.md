@@ -239,3 +239,18 @@ Authentication
 Protected endpoints use the JWT authentication cookies created during login.
 
 Admin endpoints additionally require the authenticated user's role to be admin.
+
+Authentication        ✅
+JWT + cookies         ✅
+Categories            ✅
+Products              ✅
+Cart                  ✅
+Orders                ✅
+Payments/Razorpay     ✅
+Addresses             ✅
+Zod validation        ✅
+Error handling        ✅
+Rate limiting         ✅
+Security hardening    ✅
+Automated tests       ✅
+API documentation     ✅
