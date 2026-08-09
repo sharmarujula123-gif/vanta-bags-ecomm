@@ -9,7 +9,13 @@ import {
   setDefaultAddress,
 } from "../controllers/addressController.js";
 
+import {
+  createAddressSchema,
+  updateAddressSchema,
+} from "../validators/addressValidator.js";
+
 import authenticateUser from "../middleware/authenticateUser.js";
+import { validate } from "../middleware/validate.js";
 
 const router = express.Router();
 
@@ -48,5 +54,16 @@ router.patch(
   authenticateUser,
   setDefaultAddress
 );
-
+router.post(
+    "/",
+    authenticateUser,
+    validate(createAddressSchema),
+    createAddress
+  );
+  router.patch(
+    "/:id",
+    authenticateUser,
+    validate(updateAddressSchema),
+    updateAddress
+  );
 export default router;
