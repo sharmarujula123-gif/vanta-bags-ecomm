@@ -1,9 +1,10 @@
 import express from "express";
 
 import {
-  createPayment,
-  verifyPayment,
-} from "../controllers/paymentController.js";
+    createPayment,
+    verifyPayment,
+    handleWebhook,
+  } from "../controllers/paymentController.js";
 
 import authenticateUser from "../middleware/authenticateUser.js";
 
@@ -20,5 +21,9 @@ router.post(
   authenticateUser,
   verifyPayment
 );
-
+router.post(
+    "/webhook",
+    handleWebhook
+  );
+  
 export default router;

@@ -177,3 +177,98 @@ export const createPayment = async (req, res) => {
       },
     });
   };
+
+  export const handleWebhook = async (req, res) => {
+    const signature = req.headers["x-razorpay-signature"];
+  
+    if (!signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Webhook signature missing",
+      });
+    }
+  
+    const expectedSignature = crypto
+      .createHmac(
+        "sha256",
+        process.env.RAZORPAY_WEBHOOK_SECRET
+      )
+      .update(req.body)
+      .digest("hex");
+  
+    if (signature !== expectedSignature) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid webhook signature",
+      });
+    }
+  
+    let event;
+  
+    try {
+      event = JSON.parse(req.body.toString());
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid webhook payload",
+      });
+    }
+  
+    try {
+      if (event.event === "payment.captured") {
+        const paymentEntity = event.payload.payment.entity;
+  
+        const payment = await Payment.findOne({
+          providerPaymentId: paymentEntity.order_id,
+        });
+  
+        if (!payment) {
+          return res.status(200).json({
+            success: true,
+            message: "Payment record not found",
+          });
+        }
+  
+        if (payment.status !== "paid") {
+          payment.status = "paid";
+          payment.paidAt = new Date();
+  
+          await payment.save();
+  
+          await Order.findByIdAndUpdate(payment.order, {
+            paymentStatus: "paid",
+            orderStatus: "confirmed",
+          });
+        }
+      }
+  
+      if (event.event === "payment.failed") {
+        const paymentEntity = event.payload.payment.entity;
+  
+        const payment = await Payment.findOne({
+          providerPaymentId: paymentEntity.order_id,
+        });
+  
+        if (payment && payment.status !== "paid") {
+          payment.status = "failed";
+          await payment.save();
+  
+          await Order.findByIdAndUpdate(payment.order, {
+            paymentStatus: "failed",
+          });
+        }
+      }
+  
+      return res.status(200).json({
+        success: true,
+        message: "Webhook processed",
+      });
+    } catch (error) {
+      console.error("Webhook processing error:", error);
+  
+      return res.status(500).json({
+        success: false,
+        message: "Webhook processing failed",
+      });
+    }
+  };

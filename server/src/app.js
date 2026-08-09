@@ -21,22 +21,28 @@ app.use(
   })
 );
 
+// Razorpay webhook needs the raw request body
+app.use(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.get("/api/health", (req, res) => {
-    res.status(200).json({
-      success: true,
-      message: "Vanta Bags API is running",
-    });
+  res.status(200).json({
+    success: true,
+    message: "Vanta Bags API is running",
   });
-  
-  app.use("/api/auth", authRoutes);
-  app.use("/api/categories", categoryRoutes);
-  app.use("/api/products", productRoutes);
-  app.use("/api/cart", cartRoutes);
-  app.use("/api/orders", orderRoutes);
-  app.use("/api/payments", paymentRoutes);
-  
-export default app;
+});
+
+app.use("/api/auth", authRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
+
+export default app; 
