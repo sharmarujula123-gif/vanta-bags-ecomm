@@ -1,9 +1,12 @@
 import express from "express";
 
 import {
-  getCart,
-  addToCart,
-} from "../controllers/cartController.js";
+    getCart,
+    addToCart,
+    updateCartItem,
+    removeCartItem,
+    clearCart,
+  } from "../controllers/cartController.js";
 
 import authenticateUser from "../middleware/authenticateUser.js";
 
@@ -20,5 +23,22 @@ router.post(
   authenticateUser,
   addToCart
 );
-
+router.patch(
+    "/items/:productId",
+    authenticateUser,
+    updateCartItem
+  );
+  
+  router.delete(
+    "/items/:productId",
+    authenticateUser,
+    removeCartItem
+  );
+  
+  router.delete(
+    "/",
+    authenticateUser,
+    clearCart
+  );
+  
 export default router;
