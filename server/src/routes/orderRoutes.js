@@ -7,6 +7,7 @@ import {
   getAllOrders,
   getAdminOrderById,
   updateOrderStatus,
+  cancelMyOrder,
 } from "../controllers/orderController.js";
 
 import authenticateUser from "../middleware/authenticateUser.js";
@@ -14,7 +15,10 @@ import requireAdmin from "../middleware/requireAdmin.js";
 
 const router = express.Router();
 
+// ====================
 // Customer
+// ====================
+
 router.post(
   "/",
   authenticateUser,
@@ -27,9 +31,16 @@ router.get(
   getMyOrders
 );
 
+router.patch(
+  "/:id/cancel",
+  authenticateUser,
+  cancelMyOrder
+);
 
-
+// ====================
 // Admin
+// ====================
+
 router.get(
   "/admin/all",
   authenticateUser,
@@ -50,13 +61,15 @@ router.patch(
   requireAdmin,
   updateOrderStatus
 );
+
+// ====================
+// Customer - Single Order
+// ====================
+
 router.get(
-    "/:id",
-    authenticateUser,
-    getOrderById
-  );router.get(
-    "/:id",
-    authenticateUser,
-    getOrderById
-  );
+  "/:id",
+  authenticateUser,
+  getOrderById
+);
+
 export default router;

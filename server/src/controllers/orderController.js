@@ -246,18 +246,7 @@ export const getAllOrders = async (req, res) => {
       });
     }
   
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      {
-        orderStatus: status,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
-      .populate("user", "name email")
-      .populate("items.product", "name slug");
+    const order = await Order.findById(req.params.id);
   
     if (!order) {
       return res.status(404).json({
@@ -266,9 +255,69 @@ export const getAllOrders = async (req, res) => {
       });
     }
   
+    const allowedTransitions = {
+      pending: ["confirmed", "cancelled"],
+      confirmed: ["processing", "cancelled"],
+      processing: ["shipped", "cancelled"],
+      shipped: ["delivered"],
+      delivered: [],
+      cancelled: [],
+    };
+  
+    const nextStatuses = allowedTransitions[order.orderStatus];
+  
+    if (!nextStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change order status from "${order.orderStatus}" to "${status}"`,
+      });
+    }
+  
+    order.orderStatus = status;
+  
+    await order.save();
+  
     return res.status(200).json({
       success: true,
       message: "Order status updated successfully",
+      data: {
+        order,
+      },
+    });
+  };
+  export const cancelMyOrder = async (req, res) => {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+  
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+  
+    const cancellableStatuses = [
+      "pending",
+      "confirmed",
+      "processing",
+    ];
+  
+    if (!cancellableStatuses.includes(order.orderStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Order cannot be cancelled after it reaches "${order.orderStatus}" status`,
+      });
+    }
+  
+    order.orderStatus = "cancelled";
+  
+    await order.save();
+  
+    return res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully",
       data: {
         order,
       },
