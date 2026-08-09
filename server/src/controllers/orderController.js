@@ -193,3 +193,84 @@ export const getOrderById = async (req, res) => {
     },
   });
 };
+export const getAllOrders = async (req, res) => {
+    const orders = await Order.find()
+      .populate("user", "name email")
+      .populate("items.product", "name slug")
+      .sort({ createdAt: -1 });
+  
+    return res.status(200).json({
+      success: true,
+      data: {
+        orders,
+      },
+    });
+  };
+  
+  export const getAdminOrderById = async (req, res) => {
+    const order = await Order.findById(req.params.id)
+      .populate("user", "name email")
+      .populate("items.product", "name slug");
+  
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+  
+    return res.status(200).json({
+      success: true,
+      data: {
+        order,
+      },
+    });
+  };
+  
+  export const updateOrderStatus = async (req, res) => {
+    const { status } = req.body;
+  
+    const allowedStatuses = [
+      "pending",
+      "confirmed",
+      "processing",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ];
+  
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order status",
+      });
+    }
+  
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      {
+        orderStatus: status,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+      .populate("user", "name email")
+      .populate("items.product", "name slug");
+  
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+  
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+      data: {
+        order,
+      },
+    });
+  };
