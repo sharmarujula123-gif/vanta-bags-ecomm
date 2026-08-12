@@ -3,6 +3,7 @@ import express from "express";
 import {
   createOrder,
   getMyOrders,
+  getPendingPaymentOrder,
   getOrderById,
   getAllOrders,
   getAdminOrderById,
@@ -65,7 +66,18 @@ router.patch(
 // ====================
 // Customer - Single Order
 // ====================
+router.get(
+  "/pending-payment",
+  authenticateUser,
+  getPendingPaymentOrder
+);
 
+router.get(
+  "/my",
+  authenticateUser,
+  getMyOrders
+);
+  
 router.get(
   "/:id",
   authenticateUser,

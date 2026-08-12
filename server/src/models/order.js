@@ -142,6 +142,16 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "pending",
     },
+
+    inventoryReserved: {
+      type: Boolean,
+      default: false,
+    },
+
+    paymentExpiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
