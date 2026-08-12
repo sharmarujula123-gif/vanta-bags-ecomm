@@ -1,111 +1,147 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap");
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  color-scheme: light;
+  --vanta-bg: #f4f1eb;
+  --vanta-surface: #fbfaf7;
+  --vanta-surface-2: #ece8df;
+  --vanta-text: #171614;
+  --vanta-muted: #706b63;
+  --vanta-border: #d8d2c7;
+  --vanta-strong: #11100f;
+  --vanta-inverse: #f7f4ee;
+  --vanta-accent: #b99a68;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+html.dark {
+  color-scheme: dark;
+  --vanta-bg: #0d0d0c;
+  --vanta-surface: #141412;
+  --vanta-surface-2: #1c1b18;
+  --vanta-text: #f4f1e9;
+  --vanta-muted: #a49f94;
+  --vanta-border: #302e29;
+  --vanta-strong: #f4f1e9;
+  --vanta-inverse: #0d0d0c;
+  --vanta-accent: #c5a46f;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
+  min-width: 320px;
+  background: var(--vanta-bg);
+  color: var(--vanta-text);
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  transition: background-color 220ms ease, color 220ms ease;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+::selection {
+  background: var(--vanta-text);
+  color: var(--vanta-bg);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* Premium dark-theme bridge for the existing Tailwind UI */
+.dark .bg-stone-100,
+.dark .bg-stone-100\/95 { background-color: var(--vanta-bg) !important; }
+.dark .bg-stone-50 { background-color: var(--vanta-surface) !important; }
+.dark .bg-stone-200 { background-color: var(--vanta-surface-2) !important; }
+.dark .bg-stone-300 { background-color: #292823 !important; }
+.dark .bg-stone-900,
+.dark .bg-stone-950 { background-color: #f4f1e9 !important; color: #11100f !important; }
+.dark .bg-white { background-color: var(--vanta-surface) !important; }
+
+.dark .text-stone-950,
+.dark .text-stone-900 { color: var(--vanta-text) !important; }
+.dark .text-stone-700,
+.dark .text-stone-600 { color: #c3beb3 !important; }
+.dark .text-stone-500 { color: var(--vanta-muted) !important; }
+.dark .text-stone-400 { color: #858076 !important; }
+.dark .text-stone-300 { color: #aaa59b !important; }
+.dark .text-stone-100 { color: #151412 !important; }
+.dark .text-white { color: #11100f !important; }
+
+.dark .border-stone-100,
+.dark .border-stone-200,
+.dark .border-stone-300,
+.dark .border-stone-400 { border-color: var(--vanta-border) !important; }
+.dark .border-stone-700,
+.dark .border-stone-800,
+.dark .border-stone-900,
+.dark .border-stone-950 { border-color: #3a3730 !important; }
+
+.dark .divide-stone-100,
+.dark .divide-stone-200 { border-color: var(--vanta-border) !important; }
+
+.dark .hover\:bg-stone-50:hover { background-color: #1b1a17 !important; }
+.dark .hover\:bg-stone-100:hover { background-color: #25231f !important; }
+.dark .hover\:bg-stone-700:hover,
+.dark .hover\:bg-stone-800:hover,
+.dark .hover\:bg-stone-900:hover { background-color: #ded8cc !important; color: #11100f !important; }
+.dark .hover\:text-stone-950:hover { color: #fff !important; }
+.dark .hover\:border-stone-950:hover { border-color: #f4f1e9 !important; }
+
+.dark input,
+.dark select,
+.dark textarea {
+  color: var(--vanta-text);
+  background-color: var(--vanta-surface);
+  border-color: var(--vanta-border);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #77736b;
+}
+
+.dark option {
+  background: #171613;
+  color: #f4f1e9;
+}
+
+/* Shared premium surfaces */
+.vanta-glass {
+  background: color-mix(in srgb, var(--vanta-surface) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vanta-border) 72%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.vanta-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--vanta-muted);
+}
+
+.vanta-serif {
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.vanta-ring {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--vanta-text) 8%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vanta-reveal {
+    animation: vanta-reveal 700ms cubic-bezier(.2,.7,.2,1) both;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+@keyframes vanta-reveal {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
 }
