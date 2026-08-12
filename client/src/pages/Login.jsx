@@ -29,8 +29,15 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await login(formData);
-      navigate("/");
+      const data = await login(formData);
+
+      const user = data.data?.user;
+
+      if (user?.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (error) {
       setError(
         error.response?.data?.message ||
