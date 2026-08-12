@@ -1,26 +1,19 @@
-export const validate = (schema) => {
-    return (req, res, next) => {
-      const result = schema.safeParse({
+export const validate = (schema) => async (req, res, next) => {
+    try {
+      const result = await schema.parseAsync({
         body: req.body,
-        params: req.params,
-        query: req.query,
+        params: {},
+        query: {},
       });
   
-      if (!result.success) {
-        return res.status(400).json({
-          success: false,
-          message: "Validation failed",
-          errors: result.error.issues.map((issue) => ({
-            field: issue.path.join("."),
-            message: issue.message,
-          })),
-        });
-      }
-  
-      req.body = result.data.body;
-      req.params = result.data.params;
-      req.query = result.data.query;
+      req.body = result.body;
   
       next();
-    };
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: error.errors || error.issues || [],
+      });
+    }
   };
