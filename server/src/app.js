@@ -17,9 +17,15 @@ const app = express();
 
 app.use(helmet());
 
-const allowedOrigins = [
-    process.env.CLIENT_URL,
-  ];
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [process.env.CLIENT_URL]
+    : [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+      ];
   
   app.use(
     cors({
