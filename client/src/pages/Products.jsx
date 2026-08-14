@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { tw } from "../utils/twStyles.js";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
-  Search,
+  ChevronDown,
+  Heart,
   SlidersHorizontal,
   X,
 } from "lucide-react";
@@ -11,138 +13,306 @@ import {
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
 
-const Products = () => {
+const CATEGORY_HEROES = {
+  backpacks: {
+    title: "Backpacks",
+    subtitle: "Functional. Durable. Made for your journey.",
+    image:
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1800&q=85",
+  },
+  "laptop-bags": {
+    title: "Laptop Bags",
+    subtitle: "Polished protection for work and everyday carry.",
+    image:
+      "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?auto=format&fit=crop&w=1800&q=85",
+  },
+  "duffle-bags": {
+    title: "Duffle Bags",
+    subtitle: "Built for weekends, workouts and longer escapes.",
+    image:
+      "https://images.unsplash.com/photo-1556306535-38febf6782e7?auto=format&fit=crop&w=1800&q=85",
+  },
+  handbags: {
+    title: "Handbags",
+    subtitle: "Refined silhouettes for everyday elegance.",
+    image:
+      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=1800&q=85",
+  },
+  "travel-bags": {
+    title: "Travel Bags",
+    subtitle: "Smart organization for the road ahead.",
+    image:
+      "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=1800&q=85",
+  },
+};
+
+const formatPrice = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
+const normalizeCategoryKey = (value = "") =>
+  String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+const unwrapList = (payload, keys = []) => {
+  let value = payload;
+
+  for (let i = 0; i < 4; i += 1) {
+    if (Array.isArray(value)) return value;
+    if (!value || typeof value !== "object") return [];
+
+    const nextKey = keys.find((key) => value[key] !== undefined);
+    if (!nextKey) return [];
+    value = value[nextKey];
+  }
+
+  return Array.isArray(value) ? value : [];
+};
+
+const getCategoryId = (category) =>
+  String(
+    category?._id ||
+      category?.id ||
+      category?.categoryId ||
+      category?.category?._id ||
+      category?.category?.id ||
+      ""
+  );
+
+const getCategoryKey = (category) => {
+  const value =
+    category?.slug ||
+    category?.name ||
+    category?.category?.slug ||
+    category?.category?.name ||
+    getCategoryId(category);
+  return value ? normalizeCategoryKey(value) : "";
+};
+
+const normalizeImageUrl = (value) => {
+  if (!value || typeof value !== "string") return "";
+  const markdownMatch = value.match(/\((https?:\/\/[^)]+)\)/);
+  if (markdownMatch) return markdownMatch[1];
+  return value.trim();
+};
+
+const PRICE_MIN = 0;
+const PRICE_MAX = 10000;
+const PRICE_STEP = 100;
+
+const Products = ({ categorySlug = "" }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlCategory = searchParams.get("category") || categorySlug || "";
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] =
-    useState("");
-
-  const [selectedCategory, setSelectedCategory] =
-    useState("");
-
-  const [sort, setSort] =
-    useState("newest");
-
-  const [minPrice, setMinPrice] =
-    useState("");
-
-  const [maxPrice, setMaxPrice] =
-    useState("");
-
-  const [featured, setFeatured] =
-    useState(false);
-
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(urlCategory);
+  const [sort, setSort] = useState("newest");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  
+  const [appliedMinPrice, setAppliedMinPrice] = useState("");
+  const [appliedMaxPrice, setAppliedMaxPrice] = useState("");
+  const [featured, setFeatured] = useState(false);
   const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalProducts: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [wishlist, setWishlist] = useState([]);
+  const [retryKey, setRetryKey] = useState(0);
 
-  const [pagination, setPagination] =
-    useState({
-      currentPage: 1,
-      totalPages: 1,
-      totalProducts: 0,
-      hasNextPage: false,
-      hasPreviousPage: false,
-    });
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [showFilters, setShowFilters] =
-    useState(false);
-
-  /*
-   * Load categories
-   */
+  useEffect(() => {
+    setSelectedCategory(urlCategory);
+    setPage(1);
+  }, [urlCategory]);
 
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const data =
-          await categoryService.getCategories();
-
-        setCategories(
-          data.data?.categories ||
-            data.categories ||
-            []
-        );
-      } catch (error) {
-        console.error(
-          "Failed to load categories:",
-          error
-        );
+        const data = await categoryService.getCategories();
+        const list = unwrapList(data, [
+          "categories",
+          "data",
+          "results",
+          "items",
+        ]);
+        setCategories(list);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      } finally {
+        setCategoriesLoading(false);
       }
     };
 
     loadCategories();
   }, []);
 
-  /*
-   * Load products
-   */
+  const activeCategory = useMemo(() => {
+    if (!selectedCategory) return null;
+
+    const selectedKey = normalizeCategoryKey(selectedCategory);
+
+    return (
+      categories.find((category) => {
+        const slug = normalizeCategoryKey(
+          category.slug || category.category?.slug || ""
+        );
+        const name = normalizeCategoryKey(
+          category.name || category.category?.name || ""
+        );
+        const id = getCategoryId(category);
+        const key = getCategoryKey(category);
+
+        return (
+          id === String(selectedCategory) ||
+          slug === selectedKey ||
+          name === selectedKey ||
+          key === selectedKey
+        );
+      }) || null
+    );
+  }, [categories, selectedCategory]);
+
+  const activeCategoryId = getCategoryId(activeCategory);
+
+  const selectedMinPrice =
+    minPrice === "" ? PRICE_MIN : Math.min(PRICE_MAX, Math.max(PRICE_MIN, Number(minPrice)));
+  const selectedMaxPrice =
+    maxPrice === "" ? PRICE_MAX : Math.min(PRICE_MAX, Math.max(PRICE_MIN, Number(maxPrice)));
 
   useEffect(() => {
+    if (selectedCategory && categoriesLoading) {
+      setLoading(true);
+      return;
+    }
+
+    const parseProductsResponse = (data) => {
+      const responseData = data?.data || data || {};
+      return {
+        products: responseData.products || responseData.items || data?.products || data?.items || [],
+        pagination: responseData.pagination || data?.pagination || null,
+      };
+    };
+
+    const productMatches = (product) => {
+      const price = Number(product?.price);
+      if (!Number.isFinite(price)) return false;
+      if (appliedMinPrice !== "" && price < Number(appliedMinPrice)) return false;
+      if (appliedMaxPrice !== "" && price > Number(appliedMaxPrice)) return false;
+      if (featured && !product?.isFeatured) return false;
+      return true;
+    };
+
+    const productCategoryMatches = (product) => {
+      if (!selectedCategory) return true;
+
+      const wanted = normalizeCategoryKey(selectedCategory);
+      const productCategory = product?.category;
+      if (!productCategory) return false;
+
+      const values = [
+        productCategory?._id,
+        productCategory?.id,
+        productCategory?.categoryId,
+        productCategory?.slug,
+        productCategory?.name,
+        productCategory?.category?.slug,
+        productCategory?.category?.name,
+      ].filter(Boolean);
+
+      return values.some((value) =>
+        normalizeCategoryKey(value) === wanted || String(value) === String(selectedCategory)
+      );
+    };
+
     const loadProducts = async () => {
       setLoading(true);
       setError("");
 
       try {
-        const params = {
-          page,
-          limit: 12,
-          sort,
-        };
+        const min = appliedMinPrice === "" ? null : Number(appliedMinPrice);
+        const max = appliedMaxPrice === "" ? null : Number(appliedMaxPrice);
 
-        if (search.trim()) {
-          params.search = search.trim();
+        if (min !== null && max !== null && (Number.isNaN(min) || Number.isNaN(max) || min > max)) {
+          setProducts([]);
+          setPagination({ currentPage: 1, totalPages: 1, totalProducts: 0, hasNextPage: false, hasPreviousPage: false });
+          setError("Please enter a valid price range: From must be less than or equal to To.");
+          setLoading(false);
+          return;
         }
 
-        if (selectedCategory) {
-          params.category =
-            selectedCategory;
-        }
+        const params = { page, limit: 12, sort };
+        if (search.trim()) params.search = search.trim();
+        if (selectedCategory) params.category = activeCategoryId || selectedCategory;
+        if (min !== null) params.minPrice = min;
+        if (max !== null) params.maxPrice = max;
+        if (featured) params.featured = true;
 
-        if (minPrice !== "") {
-          params.minPrice =
-            Number(minPrice);
-        }
-
-        if (maxPrice !== "") {
-          params.maxPrice =
-            Number(maxPrice);
-        }
-
-        if (featured) {
-          params.featured = true;
-        }
-
-        const data =
-          await productService.getProducts(
-            params
-          );
-
-        setProducts(
-          data.data?.products ||
-            data.products ||
-            []
-        );
-
-        setPagination(
-          data.data?.pagination || {
+        try {
+          const data = await productService.getProducts(params);
+          const parsed = parseProductsResponse(data);
+          setProducts(parsed.products);
+          setPagination(parsed.pagination || {
             currentPage: page,
             totalPages: 1,
-            totalProducts: 0,
+            totalProducts: parsed.products.length,
             hasNextPage: false,
             hasPreviousPage: false,
-          }
-        );
-      } catch (error) {
+          });
+        } catch (categoryError) {
+          // Some existing databases have category slugs/names that do not match
+          // the URL exactly. Do not let that make the whole Products page fail.
+          // Fetch the normal product list and filter against the populated
+          // category object on the client as a safe compatibility fallback.
+          if (!selectedCategory) throw categoryError;
+
+          const fallbackData = await productService.getProducts({
+            page: 1,
+            limit: 100,
+            sort,
+            ...(search.trim() ? { search: search.trim() } : {}),
+            ...(min !== null ? { minPrice: min } : {}),
+            ...(max !== null ? { maxPrice: max } : {}),
+            ...(featured ? { featured: true } : {}),
+          });
+
+          const fallback = parseProductsResponse(fallbackData);
+          const matching = fallback.products.filter(
+            (product) => productMatches(product) && productCategoryMatches(product)
+          );
+          const start = (page - 1) * 12;
+          const visible = matching.slice(start, start + 12);
+          const totalPages = Math.max(1, Math.ceil(matching.length / 12));
+
+          setProducts(visible);
+          setPagination({
+            currentPage: page,
+            itemsPerPage: 12,
+            totalProducts: matching.length,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load products:", err);
+        setProducts([]);
         setError(
-          error.response?.data?.message ||
-            "Unable to load products."
+          err.response?.data?.message ||
+            "Unable to load products. Check that the backend is running on port 5000."
         );
       } finally {
         setLoading(false);
@@ -150,77 +320,60 @@ const Products = () => {
     };
 
     loadProducts();
-  }, [
-    search,
-    selectedCategory,
-    sort,
-    minPrice,
-    maxPrice,
-    featured,
-    page,
-  ]);
+  }, [search, selectedCategory, activeCategoryId, categoriesLoading, sort, appliedMinPrice, appliedMaxPrice, featured, page, retryKey]);
 
-  /*
-   * Search
-   */
+  const activeCategoryName = activeCategory?.name || "";
 
-  const handleSearch = (event) => {
-    event.preventDefault();
+  const hero =
+    CATEGORY_HEROES[selectedCategory] || {
+      title: activeCategory?.name || "All Bags",
+      subtitle: "Designed for modern journeys. Built to go further.",
+      image: CATEGORY_HEROES.backpacks.image,
+    };
 
-    setPage(1);
-    setSearch(searchInput);
+  const hasFilters =
+    search || selectedCategory || appliedMinPrice || appliedMaxPrice || featured;
+
+  const toggleWishlist = (productId) => {
+    setWishlist((current) =>
+      current.includes(productId)
+        ? current.filter((id) => id !== productId)
+        : [...current, productId]
+    );
   };
 
-  /*
-   * Category
-   */
+  const chooseCategory = (categoryOrSlug) => {
+    if (!categoryOrSlug) {
+      setSelectedCategory("");
+      setPage(1);
+      setSearchParams({});
+      return;
+    }
 
-  const handleCategoryChange = (
-    category
-  ) => {
-    setSelectedCategory(category);
+    const category =
+      typeof categoryOrSlug === "object"
+        ? categoryOrSlug
+        : categories.find((item) => {
+            const wanted = normalizeCategoryKey(categoryOrSlug);
+            return (
+              normalizeCategoryKey(item.slug || item.category?.slug || "") === wanted ||
+              normalizeCategoryKey(item.name || item.category?.name || "") === wanted ||
+              getCategoryId(item) === String(categoryOrSlug)
+            );
+          });
+
+    // Always keep the URL human-readable, but retain the category object in
+    // state long enough for activeCategoryId to send MongoDB's _id to the API.
+    const key = category
+      ? getCategoryKey(category)
+      : normalizeCategoryKey(categoryOrSlug);
+
+    setSelectedCategory(key);
     setPage(1);
+
+    if (key) setSearchParams({ category: key });
+    else setSearchParams({});
   };
-
-  /*
-   * Sort
-   */
-
-  const handleSortChange = (event) => {
-    setSort(event.target.value);
-    setPage(1);
-  };
-
-  /*
-   * Price filters
-   */
-
-  const handleMinPriceChange = (
-    event
-  ) => {
-    setMinPrice(event.target.value);
-    setPage(1);
-  };
-
-  const handleMaxPriceChange = (
-    event
-  ) => {
-    setMaxPrice(event.target.value);
-    setPage(1);
-  };
-
-  /*
-   * Featured
-   */
-
-  const handleFeaturedChange = () => {
-    setFeatured((current) => !current);
-    setPage(1);
-  };
-
-  /*
-   * Reset
-   */
 
   const resetFilters = () => {
     setSearch("");
@@ -229,433 +382,328 @@ const Products = () => {
     setSort("newest");
     setMinPrice("");
     setMaxPrice("");
+    setAppliedMinPrice("");
+    setAppliedMaxPrice("");
     setFeatured(false);
+    setPage(1);
+    setSearchParams({});
+  };
+
+  const submitSearch = (event) => {
+    event.preventDefault();
+    setSearch(searchInput);
     setPage(1);
   };
 
-  const hasFilters =
-    search ||
-    selectedCategory ||
-    minPrice ||
-    maxPrice ||
-    featured;
-
   return (
-    <main className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+    <main className={tw("vanta-collection-page")}>
+      {/* Breadcrumb */}
+      <div className={tw("vanta-collection-shell")}>
+        <div className={tw("vanta-breadcrumb")}>
+          <Link to="/">Home</Link>
+          <span>›</span>
+          <span>Categories</span>
+          <span>›</span>
+          <strong>{hero.title}</strong>
+        </div>
 
-      {/* Header */}
+        {/* Category hero */}
+        <section className={tw("vanta-collection-hero")}>
+          <img src={hero.image} alt={hero.title} />
+          <div className={tw("vanta-collection-hero-overlay")} />
+          <div className={tw("vanta-collection-hero-copy")}>
+            <p className={tw("vanta-eyebrow")}>VANTA COLLECTION</p>
+            <h1>{hero.title}</h1>
+            <p>{hero.subtitle}</p>
+          </div>
+        </section>
 
-      <div className="border-b border-stone-200 pb-10">
-        <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
-
-          <div>
-            <p className="text-xs font-bold tracking-[0.25em]">
-              VANTA BAGS
-            </p>
-
-            <h1 className="mt-4 font-serif text-5xl md:text-6xl">
-              Collection
-            </h1>
-
-            <p className="mt-5 max-w-xl leading-7 text-stone-500">
-              Explore bags designed for work,
-              travel and everyday movement.
-            </p>
+        {/* Collection toolbar */}
+        <section className={tw("vanta-collection-toolbar")}>
+          <div className={tw("vanta-collection-mobile-title")}>
+            <p className={tw("vanta-eyebrow")}>THE COLLECTION</p>
+            <h2>{hero.title}</h2>
           </div>
 
-          {/* Search */}
-
-          <form
-            onSubmit={handleSearch}
-            className="flex w-full max-w-md border border-stone-300"
-          >
-            <div className="flex flex-1 items-center">
-              <Search
-                size={18}
-                className="ml-3 shrink-0 text-stone-400"
-              />
-
-              <input
-                type="search"
-                value={searchInput}
-                onChange={(event) =>
-                  setSearchInput(
-                    event.target.value
-                  )
-                }
-                placeholder="Search bags..."
-                className="h-12 w-full bg-transparent px-3 text-sm outline-none"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="bg-stone-950 px-5 text-sm font-semibold text-white hover:bg-stone-800"
-            >
-              Search
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* Categories */}
-
-      <div className="flex gap-3 overflow-x-auto py-8">
-        <button
-          type="button"
-          onClick={() =>
-            handleCategoryChange("")
-          }
-          className={`whitespace-nowrap border px-5 py-2.5 text-sm transition ${
-            selectedCategory === ""
-              ? "border-stone-950 bg-stone-950 text-white"
-              : "border-stone-300 hover:border-stone-950"
-          }`}
-        >
-          All
-        </button>
-
-        {categories.map((category) => (
-          <button
-            key={category._id}
-            type="button"
-            onClick={() =>
-              handleCategoryChange(
-                category.slug
-              )
-            }
-            className={`whitespace-nowrap border px-5 py-2.5 text-sm transition ${
-              selectedCategory ===
-              category.slug
-                ? "border-stone-950 bg-stone-950 text-white"
-                : "border-stone-300 hover:border-stone-950"
-            }`}
-          >
-            {category.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Toolbar */}
-
-      <div className="flex flex-col gap-4 border-y border-stone-200 py-5 sm:flex-row sm:items-center sm:justify-between">
-
-        <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() =>
-              setShowFilters(
-                (current) => !current
-              )
-            }
-            className="inline-flex items-center gap-2 border border-stone-300 px-4 py-2.5 text-sm font-semibold hover:border-stone-950"
+            className={tw("vanta-filter-toggle")}
+            onClick={() => setShowFilters((current) => !current)}
           >
-            <SlidersHorizontal
-              size={16}
-            />
-
+            <SlidersHorizontal size={15} />
             Filters
           </button>
 
-          <p className="text-sm text-stone-500">
-            {pagination.totalProducts}{" "}
-            {pagination.totalProducts === 1
-              ? "product"
-              : "products"}
-          </p>
-        </div>
+          <div className={tw("vanta-collection-search-wrap")}>
+            <form onSubmit={submitSearch} className={tw("vanta-collection-search")}>
+              <input
+                type="search"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="Search collection"
+              />
+              <button type="submit">Search</button>
+            </form>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-stone-500">
-            Sort
+          <div className={tw("vanta-sort-wrap")}>
+            <span>Sort by</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value)}>
+              <option value="newest">Newest</option>
+              <option value="popular">Popular</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="name_asc">Name: A-Z</option>
+            </select>
+            <ChevronDown size={13} />
+          </div>
+
+          <span className={tw("vanta-product-count")}>
+            {pagination.totalProducts || products.length} Products
           </span>
+        </section>
 
-          <select
-            value={sort}
-            onChange={handleSortChange}
-            className="h-10 border border-stone-300 bg-transparent px-3 text-sm outline-none"
-          >
-            <option value="newest">
-              Newest
-            </option>
+        <div className={tw("vanta-collection-layout")}>
+          {/* Sidebar */}
+          <aside className={tw(`vanta-collection-sidebar ${showFilters ? "is-open" : ""}`)}>
+            <div className={tw("vanta-filter-heading")}>
+              <div>
+                <p className={tw("vanta-eyebrow")}>Refine</p>
+                <h3>Shop Filters</h3>
+              </div>
+              <button type="button" onClick={() => setShowFilters(false)}>
+                <X size={17} />
+              </button>
+            </div>
 
-            <option value="price_asc">
-              Price: Low to High
-            </option>
+            <div className={tw("vanta-filter-block")}>
+              <div className={tw("vanta-filter-title")}>
+                <span>Category</span>
+                <ChevronDown size={14} />
+              </div>
 
-            <option value="price_desc">
-              Price: High to Low
-            </option>
+              <label className={tw("vanta-check-row")}>
+                <input
+                  type="checkbox"
+                  checked={!selectedCategory}
+                  onChange={() => chooseCategory("")}
+                />
+                <span>All Bags</span>
+                <small>{pagination.totalProducts}</small>
+              </label>
 
-            <option value="name_asc">
-              Name: A-Z
-            </option>
+              {categories.map((category) => {
+                const categoryKey = getCategoryKey(category);
 
-            <option value="name_desc">
-              Name: Z-A
-            </option>
-          </select>
+                return (
+                  <label className={tw("vanta-check-row")} key={getCategoryId(category) || categoryKey}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        normalizeCategoryKey(selectedCategory) ===
+                        normalizeCategoryKey(categoryKey)
+                      }
+                      onChange={() => chooseCategory(category)}
+                    />
+                    <span>{category.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className={tw("vanta-filter-block")}>
+              <div className={tw("vanta-filter-title")}>
+                <span>Price Range</span>
+                <ChevronDown size={14} />
+              </div>
+
+              <div className="mt-5 px-1">
+                <div className="relative h-6">
+                  <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-neutral-700" />
+                  <div
+                    className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-white"
+                    style={{
+                      left: `${((selectedMinPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`,
+                      right: `${100 - ((selectedMaxPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`,
+                    }}
+                  />
+                  <input
+                    aria-label="Minimum price"
+                    type="range"
+                    min={PRICE_MIN}
+                    max={Math.max(PRICE_MIN, selectedMaxPrice - PRICE_STEP)}
+                    step={PRICE_STEP}
+                    value={selectedMinPrice}
+                    onChange={(event) => {
+                      const next = Math.max(PRICE_MIN, Math.min(Number(event.target.value), selectedMaxPrice - PRICE_STEP));
+                      setMinPrice(String(next));
+                      setAppliedMinPrice(String(next));
+                      setPage(1);
+                    }}
+                    className="absolute inset-0 z-20 h-6 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-white [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-white"
+                  />
+                  <input
+                    aria-label="Maximum price"
+                    type="range"
+                    min={Math.min(PRICE_MAX, selectedMinPrice + PRICE_STEP)}
+                    max={PRICE_MAX}
+                    step={PRICE_STEP}
+                    value={selectedMaxPrice}
+                    onChange={(event) => {
+                      const next = Math.min(PRICE_MAX, Math.max(Number(event.target.value), selectedMinPrice + PRICE_STEP));
+                      setMaxPrice(String(next));
+                      setAppliedMaxPrice(String(next));
+                      setPage(1);
+                    }}
+                    className="absolute inset-0 z-30 h-6 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-white [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-white"
+                  />
+                </div>
+                <div className="mt-4 flex items-center justify-between text-sm font-medium text-white">
+                  <span>₹{selectedMinPrice.toLocaleString("en-IN")}</span>
+                  <span>₹{selectedMaxPrice.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={tw("vanta-filter-block")}>
+              <div className={tw("vanta-filter-title")}>
+                <span>Featured</span>
+                <ChevronDown size={14} />
+              </div>
+              <label className={tw("vanta-check-row")}>
+                <input
+                  type="checkbox"
+                  checked={featured}
+                  onChange={() => {
+                    setFeatured((current) => !current);
+                    setPage(1);
+                  }}
+                />
+                <span>Featured pieces</span>
+              </label>
+            </div>
+
+            <button type="button" className={tw("vanta-filter-apply")} onClick={() => setShowFilters(false)}>
+              Filter
+            </button>
+
+            {hasFilters && (
+              <button type="button" className={tw("vanta-filter-clear")} onClick={resetFilters}>
+                Clear all filters
+              </button>
+            )}
+          </aside>
+
+          {/* Product grid */}
+          <section className={tw("vanta-collection-results")}>
+            {loading && (
+              <div className={tw("vanta-collection-grid")}>
+                {[1, 2, 3, 4, 5, 6].map((item) => (
+                  <div className={tw("vanta-collection-product skeleton")} key={item}>
+                    <div className={tw("vanta-collection-product-image")} />
+                    <div className="skeleton-line wide" />
+                    <div className="skeleton-line short" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!loading && error && (
+              <div className={tw("vanta-collection-empty")}>
+                <h2>Something went wrong</h2>
+                <p>{error}</p>
+                <button type="button" onClick={() => setRetryKey((current) => current + 1)}>
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && products.length === 0 && (
+              <div className={tw("vanta-collection-empty")}>
+                <h2>No bags found</h2>
+                <p>Try changing your search or collection filters.</p>
+                <button type="button" onClick={resetFilters}>Clear filters</button>
+              </div>
+            )}
+
+            {!loading && !error && products.length > 0 && (
+              <>
+                <div className={tw("vanta-collection-grid")}>
+                  {products.map((product) => {
+                    const isWishlisted = wishlist.includes(product._id);
+                    const rating = Number(product.rating?.average || product.averageRating || 0);
+
+                    return (
+                      <article className={tw("vanta-collection-product")} key={product._id}>
+                        <Link to={`/products/${product.slug}`} className={tw("vanta-collection-product-link")}>
+                          <div className={tw("vanta-collection-product-image")}>
+                            {normalizeImageUrl(product.images?.[0]) ? (
+                              <img src={normalizeImageUrl(product.images?.[0])} alt={product.name} />
+                            ) : (
+                              <div className={tw("vanta-image-placeholder")}>VANTA</div>
+                            )}
+
+                            {product.isFeatured && product.stock > 0 && (
+                              <span className={tw("vanta-collection-badge")}>Featured</span>
+                            )}
+
+                            {product.stock === 0 && (
+                              <span className={tw("vanta-collection-badge sold")}>Sold out</span>
+                            )}
+                          </div>
+
+                          <div className={tw("vanta-collection-product-meta")}>
+                            <h3>{product.name}</h3>
+                            <p>{formatPrice(product.price)}</p>
+                            {product.compareAtPrice > product.price && (
+                              <span className={tw("vanta-old-price")}>{formatPrice(product.compareAtPrice)}</span>
+                            )}
+                            {rating > 0 && (
+                              <div className={tw("vanta-rating")} aria-label={`${rating} out of 5 stars`}>
+                                <span>★★★★★</span>
+                                <small>{rating.toFixed(1)}</small>
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+
+                        <button
+                          type="button"
+                          className={tw(`vanta-product-heart ${isWishlisted ? "active" : ""}`)}
+                          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                          onClick={() => toggleWishlist(product._id)}
+                        >
+                          <Heart size={15} fill={isWishlisted ? "currentColor" : "none"} />
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+
+                {pagination.totalPages > 1 && (
+                  <div className={tw("vanta-collection-pagination")}>
+                    <button
+                      type="button"
+                      disabled={!pagination.hasPreviousPage}
+                      onClick={() => setPage((current) => Math.max(current - 1, 1))}
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span>{pagination.currentPage}</span>
+                    <button
+                      type="button"
+                      disabled={!pagination.hasNextPage}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
         </div>
       </div>
-
-      {/* Filters */}
-
-      {showFilters && (
-        <div className="border-b border-stone-200 bg-stone-50 py-6">
-          <div className="grid gap-6 md:grid-cols-3">
-
-            {/* Minimum price */}
-
-            <div>
-              <label className="text-xs font-semibold tracking-wide">
-                Minimum Price
-              </label>
-
-              <input
-                type="number"
-                min="0"
-                value={minPrice}
-                onChange={
-                  handleMinPriceChange
-                }
-                placeholder="₹0"
-                className="mt-2 h-11 w-full border border-stone-300 bg-white px-3 text-sm outline-none focus:border-stone-950"
-              />
-            </div>
-
-            {/* Maximum price */}
-
-            <div>
-              <label className="text-xs font-semibold tracking-wide">
-                Maximum Price
-              </label>
-
-              <input
-                type="number"
-                min="0"
-                value={maxPrice}
-                onChange={
-                  handleMaxPriceChange
-                }
-                placeholder="₹10,000"
-                className="mt-2 h-11 w-full border border-stone-300 bg-white px-3 text-sm outline-none focus:border-stone-950"
-              />
-            </div>
-
-            {/* Featured */}
-
-            <label className="flex cursor-pointer items-center gap-3 self-end pb-2">
-              <input
-                type="checkbox"
-                checked={featured}
-                onChange={
-                  handleFeaturedChange
-                }
-                className="h-4 w-4"
-              />
-
-              <span className="text-sm font-semibold">
-                Featured products only
-              </span>
-            </label>
-          </div>
-
-          {hasFilters && (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-stone-600 hover:text-stone-950"
-            >
-              <X size={15} />
-              Clear all filters
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Loading */}
-
-      {loading && (
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(
-            (item) => (
-              <div
-                key={item}
-                className="animate-pulse"
-              >
-                <div className="aspect-square bg-stone-200" />
-
-                <div className="mt-4 h-4 w-3/4 bg-stone-200" />
-
-                <div className="mt-2 h-4 w-1/3 bg-stone-200" />
-              </div>
-            )
-          )}
-        </div>
-      )}
-
-      {/* Error */}
-
-      {!loading && error && (
-        <div className="mt-10 border border-dashed border-stone-300 py-24 text-center">
-          <h2 className="font-serif text-3xl">
-            Something went wrong
-          </h2>
-
-          <p className="mt-3 text-stone-500">
-            {error}
-          </p>
-
-          <button
-            type="button"
-            onClick={() => setPage(page)}
-            className="mt-6 border border-stone-300 px-5 py-2.5 text-sm font-semibold hover:border-stone-950"
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {/* Products */}
-
-      {!loading && !error && (
-        <>
-          {products.length === 0 ? (
-            <div className="mt-10 border border-dashed border-stone-300 py-24 text-center">
-              <h2 className="font-serif text-3xl">
-                No products found
-              </h2>
-
-              <p className="mt-3 text-stone-500">
-                Try changing your search or
-                filters.
-              </p>
-
-              {hasFilters && (
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  className="mt-6 inline-flex items-center gap-2 bg-stone-950 px-6 py-3 text-sm font-semibold text-white hover:bg-stone-800"
-                >
-                  Clear Filters
-                  <X size={15} />
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="mt-10 grid gap-x-5 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((product) => (
-                <Link
-                  key={product._id}
-                  to={`/products/${product.slug}`}
-                  className="group"
-                >
-                  <div className="relative aspect-square overflow-hidden bg-stone-200">
-
-                    {product.images?.[0] ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-xs font-bold tracking-[0.3em] text-stone-500">
-                        VANTA
-                      </div>
-                    )}
-
-                    {product.stock === 0 && (
-                      <span className="absolute left-3 top-3 bg-stone-950 px-3 py-1 text-[10px] font-semibold tracking-wider text-white">
-                        SOLD OUT
-                      </span>
-                    )}
-
-                    {product.isFeatured &&
-                      product.stock > 0 && (
-                        <span className="absolute left-3 top-3 bg-white px-3 py-1 text-[10px] font-semibold tracking-wider text-stone-950">
-                          FEATURED
-                        </span>
-                      )}
-                  </div>
-
-                  <div className="mt-4">
-                    <h2 className="text-sm font-semibold">
-                      {product.name}
-                    </h2>
-
-                    <p className="mt-1 text-sm text-stone-500">
-                      ₹
-                      {Number(
-                        product.price
-                      ).toLocaleString(
-                        "en-IN"
-                      )}
-                    </p>
-
-                    {product.compareAtPrice &&
-                      product.compareAtPrice >
-                        product.price && (
-                        <p className="mt-1 text-xs text-stone-400 line-through">
-                          ₹
-                          {Number(
-                            product.compareAtPrice
-                          ).toLocaleString(
-                            "en-IN"
-                          )}
-                        </p>
-                      )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Pagination */}
-
-      {!loading &&
-        !error &&
-        pagination.totalPages > 1 && (
-          <div className="mt-14 flex items-center justify-center gap-3">
-
-            <button
-              type="button"
-              disabled={
-                !pagination.hasPreviousPage
-              }
-              onClick={() =>
-                setPage((current) =>
-                  Math.max(current - 1, 1)
-                )
-              }
-              className="inline-flex h-10 items-center gap-2 border border-stone-300 px-4 text-sm font-semibold hover:border-stone-950 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronLeft size={16} />
-              Previous
-            </button>
-
-            <div className="flex h-10 min-w-10 items-center justify-center border border-stone-950 px-3 text-sm font-semibold">
-              {pagination.currentPage}
-            </div>
-
-            <button
-              type="button"
-              disabled={
-                !pagination.hasNextPage
-              }
-              onClick={() =>
-                setPage((current) =>
-                  current + 1
-                )
-              }
-              className="inline-flex h-10 items-center gap-2 border border-stone-300 px-4 text-sm font-semibold hover:border-stone-950 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Next
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
     </main>
   );
 };

@@ -55,6 +55,11 @@ const updateProductStock = async (id, stock) => {
   return response.data;
 };
 
+const activateProduct = async (id) => {
+  const response = await api.patch(`/products/${id}/activate`);
+  return response.data;
+};
+
 const deactivateProduct = async (id) => {
   const response = await api.delete(
     `/products/${id}`
@@ -73,6 +78,7 @@ const productService = {
   updateProduct,
   updateProductStock,
   deactivateProduct,
+  activateProduct,
 };
 
 export default productService;

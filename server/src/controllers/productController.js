@@ -1,6 +1,7 @@
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import slugify from "slugify";
+import mongoose from "mongoose";
 
 export const createProduct = async (req, res) => {
   const {
@@ -111,35 +112,87 @@ export const getProducts = async (req, res) => {
         { brand: { $regex: search, $options: "i" } },
       ];
     }
-  
     // Category
+    // Accept category slug, MongoDB ObjectId, or category name.
     if (category) {
-      const categoryDoc = await Category.findOne({
-        slug: category,
-        isActive: true,
-      });
-  
+      const categoryValue = String(category).trim();
+      let categoryDoc = null;
+
+      if (mongoose.isValidObjectId(categoryValue)) {
+        categoryDoc = await Category.findOne({
+          _id: categoryValue,
+          isActive: true,
+        });
+      }
+
+      if (!categoryDoc) {
+        categoryDoc = await Category.findOne({
+          slug: categoryValue.toLowerCase(),
+          isActive: true,
+        });
+      }
+
+      if (!categoryDoc) {
+        categoryDoc = await Category.findOne({
+          name: { $regex: new RegExp(`^${categoryValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+          isActive: true,
+        });
+      }
+
+      // Be forgiving with legacy category slugs such as "duffle-bag" vs
+      // "duffle-bags" and with names containing punctuation/spaces.
+      if (!categoryDoc) {
+        const normalized = categoryValue
+          .toLowerCase()
+          .trim()
+          .replace(/&/g, "and")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+
+        const candidates = [
+          normalized,
+          normalized.endsWith("-bags") ? normalized.slice(0, -1) : `${normalized}s`,
+          normalized.endsWith("-bag") ? `${normalized}s` : normalized,
+          normalized.endsWith("-bags") ? normalized.slice(0, -5) : normalized,
+        ].filter(Boolean);
+
+        categoryDoc = await Category.findOne({
+          isActive: true,
+          slug: { $in: candidates },
+        });
+      }
+
       if (!categoryDoc) {
         return res.status(404).json({
           success: false,
           message: "Category not found",
         });
       }
-  
+
       filter.category = categoryDoc._id;
     }
-  
+
     // Price range
-    if (minPrice !== undefined || maxPrice !== undefined) {
+    // Price range. Only add a bound when it is a real finite number.
+    const parsedMinPrice = minPrice !== undefined && minPrice !== "" ? Number(minPrice) : null;
+    const parsedMaxPrice = maxPrice !== undefined && maxPrice !== "" ? Number(maxPrice) : null;
+
+    if (parsedMinPrice !== null && (!Number.isFinite(parsedMinPrice) || parsedMinPrice < 0)) {
+      return res.status(400).json({ success: false, message: "Invalid minimum price" });
+    }
+
+    if (parsedMaxPrice !== null && (!Number.isFinite(parsedMaxPrice) || parsedMaxPrice < 0)) {
+      return res.status(400).json({ success: false, message: "Invalid maximum price" });
+    }
+
+    if (parsedMinPrice !== null && parsedMaxPrice !== null && parsedMinPrice > parsedMaxPrice) {
+      return res.status(400).json({ success: false, message: "Minimum price cannot be greater than maximum price" });
+    }
+
+    if (parsedMinPrice !== null || parsedMaxPrice !== null) {
       filter.price = {};
-  
-      if (minPrice !== undefined) {
-        filter.price.$gte = Number(minPrice);
-      }
-  
-      if (maxPrice !== undefined) {
-        filter.price.$lte = Number(maxPrice);
-      }
+      if (parsedMinPrice !== null) filter.price.$gte = parsedMinPrice;
+      if (parsedMaxPrice !== null) filter.price.$lte = parsedMaxPrice;
     }
   
     // Featured
@@ -350,3 +403,8 @@ export const updateProduct = async (req, res) => {
       },
     });
   };
+export const activateProduct = async (req, res) => {
+  const product = await Product.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true }).populate("category", "name slug");
+  if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+  return res.status(200).json({ success: true, message: "Product activated successfully", data: { product } });
+};

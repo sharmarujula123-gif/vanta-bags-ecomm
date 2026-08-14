@@ -1,5 +1,6 @@
 import Category from "../models/Category.js";
 import slugify from "slugify";
+import mongoose from "mongoose";
 
 export const createCategory = async (req, res) => {
   const { name, description, image } = req.body;
@@ -57,10 +58,49 @@ export const getCategories = async (req, res) => {
 };
 
 export const getCategoryBySlug = async (req, res) => {
-  const category = await Category.findOne({
-    slug: req.params.slug,
-    isActive: true,
-  });
+  const value = String(req.params.slug || "").trim();
+  let category = null;
+
+  if (mongoose.isValidObjectId(value)) {
+    category = await Category.findOne({
+      _id: value,
+      isActive: true,
+    });
+  }
+
+  if (!category) {
+    category = await Category.findOne({
+      slug: value.toLowerCase(),
+      isActive: true,
+    });
+  }
+
+  if (!category) {
+    category = await Category.findOne({
+      name: { $regex: new RegExp(`^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+      isActive: true,
+    });
+  }
+
+  if (!category) {
+    const normalized = value
+      .toLowerCase()
+      .trim()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    const candidates = [
+      normalized,
+      normalized.endsWith("-bags") ? normalized.slice(0, -1) : `${normalized}s`,
+      normalized.endsWith("-bag") ? `${normalized}s` : normalized,
+    ].filter(Boolean);
+
+    category = await Category.findOne({
+      slug: { $in: candidates },
+      isActive: true,
+    });
+  }
 
   if (!category) {
     return res.status(404).json({

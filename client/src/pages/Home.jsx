@@ -1,192 +1,238 @@
-import { ArrowRight, MoveUpRight, ShieldCheck, Sparkles, Truck } from "lucide-react";
+import { tw } from "../utils/twStyles.js";
+import { useEffect, useState } from "react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Box,
+  Check,
+  Droplets,
+  Feather,
+  Heart,
+  Search,
+  ShieldCheck,
+  ShoppingBag,
+  UserRound,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import productService from "../services/productService";
+import categoryService from "../services/categoryService";
 
-const Home = () => {
+const heroImage =
+  "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=2200&q=90";
+
+const categoryImages = {
+  backpacks:
+    "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=900&q=90",
+  "duffle-bags":
+    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=90",
+  handbags:
+    "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=90",
+  "laptop-bags":
+    "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?auto=format&fit=crop&w=900&q=90",
+  "sling-bags":
+    "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=90",
+  "travel-bags":
+    "https://images.unsplash.com/photo-1556306535-38febf6782e7?auto=format&fit=crop&w=900&q=90",
+};
+
+const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
+export default function Home() {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    Promise.allSettled([
+      productService.getProducts({ limit: 8, page: 1, sort: "newest" }),
+      categoryService.getCategories(),
+    ]).then(([productResult, categoryResult]) => {
+      if (productResult.status === "fulfilled") {
+        setProducts(
+          productResult.value.data?.products ||
+            productResult.value.products ||
+            []
+        );
+      }
+      if (categoryResult.status === "fulfilled") {
+        setCategories(
+          categoryResult.value.data?.categories ||
+            categoryResult.value.categories ||
+            []
+        );
+      }
+    });
+  }, []);
+
+  const fallbackCategories = [
+    ["Backpacks", "backpacks", "Everyday carry"],
+    ["Duffle Bags", "duffle-bags", "Made for weekends"],
+    ["Handbags", "handbags", "Easy, polished carry"],
+    ["Laptop Bags", "laptop-bags", "Built around your tech"],
+    ["Sling Bags", "sling-bags", "Light and close"],
+  ];
+
+  const categoryItems = categories.length
+    ? categories.slice(0, 5).map((category, index) => [
+        category.name,
+        category.slug,
+        ["Everyday carry", "Made for weekends", "Easy, polished carry", "Built around your tech", "Light and close"][index] ||
+          "Designed for movement",
+      ])
+    : fallbackCategories;
+
   return (
-    <main className="overflow-hidden bg-stone-100 text-stone-900">
-      {/* Hero */}
-      <section className="relative border-b border-stone-200">
-        <div className="mx-auto grid min-h-[calc(100vh-76px)] max-w-7xl grid-cols-1 lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="vanta-reveal flex flex-col justify-center px-5 py-20 lg:px-8 lg:py-24">
-            <p className="vanta-eyebrow">VANTA / 2026 COLLECTION</p>
+    <main className={tw("vanta-home vanta-reference-home")}>
+      {/* HERO */}
+      <section className={tw("vanta-reference-hero")}>
+        <img
+          src={heroImage}
+          alt="Vanta black bag"
+          className={tw("vanta-reference-hero-image")}
+        />
+        <div className={tw("vanta-reference-hero-shade")} />
 
-            <h1 className="vanta-serif mt-7 max-w-3xl text-[clamp(4rem,8vw,8rem)] leading-[.88] tracking-[-.055em]">
-              Carry
-              <br />
-              <span className="italic">with intent.</span>
-            </h1>
-
-            <p className="mt-8 max-w-lg text-base leading-8 text-stone-600 md:text-lg">
-              Premium bags for people who move. Refined silhouettes,
-              considered storage and everyday durability without the visual noise.
-            </p>
-
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link
-                to="/products"
-                className="group inline-flex items-center gap-4 bg-stone-950 px-7 py-4 text-[11px] font-bold uppercase tracking-[.18em] text-white transition hover:opacity-80"
-              >
-                Shop Collection
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-              </Link>
-
-              <a
-                href="#categories"
-                className="inline-flex items-center gap-3 border border-stone-300 px-7 py-4 text-[11px] font-bold uppercase tracking-[.18em] transition hover:border-stone-950"
-              >
-                Explore
-                <MoveUpRight size={15} />
-              </a>
-            </div>
-
-            <div className="mt-14 flex flex-wrap gap-x-8 gap-y-3 text-[10px] font-semibold uppercase tracking-[.15em] text-stone-500">
-              <span className="inline-flex items-center gap-2"><ShieldCheck size={14} /> Built to last</span>
-              <span className="inline-flex items-center gap-2"><Truck size={14} /> Pan-India delivery</span>
-            </div>
-          </div>
-
-          <div className="relative min-h-[560px] overflow-hidden bg-stone-900 lg:min-h-0">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,.14),transparent_28%),radial-gradient(circle_at_80%_80%,rgba(185,154,104,.24),transparent_34%)]" />
-            <div className="absolute inset-8 border border-white/15" />
-            <div className="absolute left-8 top-8 text-[9px] font-semibold uppercase tracking-[.28em] text-white/50">
-              VANTA / OBJECT 01
-            </div>
-
-            <div className="absolute bottom-10 left-10 right-10 flex items-end justify-between">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[.25em] text-white/50">Designed for</p>
-                <p className="mt-2 text-2xl font-medium text-white">Modern movement.</p>
-              </div>
-              <span className="text-7xl font-serif italic text-white/10">V</span>
-            </div>
-
-            <div className="absolute left-1/2 top-1/2 h-[62%] w-[48%] -translate-x-1/2 -translate-y-1/2 rounded-[28%_28%_18%_18%] border border-white/30 bg-gradient-to-br from-stone-700 via-stone-950 to-black shadow-[0_40px_100px_rgba(0,0,0,.55)]">
-              <div className="absolute left-1/2 top-[-12%] h-[20%] w-[42%] -translate-x-1/2 rounded-t-full border-x border-t border-white/25" />
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-bold tracking-[.45em] text-white/65">
-                VANTA
-              </div>
-              <div className="absolute bottom-[12%] left-[15%] right-[15%] h-px bg-white/10" />
-            </div>
-          </div>
+        <div className={tw("vanta-reference-hero-copy")}>
+          <p>BUILT TO MOVE. DESIGNED TO LAST.</p>
+          <h1>
+            What moves you,
+            <br />
+            <em>matters.</em>
+          </h1>
+          <Link to="/" className={tw("vanta-reference-outline-btn")}>
+            Explore collection <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
 
-      {/* Marquee-like value strip */}
-      <section className="border-b border-stone-200 bg-stone-950 text-stone-100">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 px-5 py-5 lg:px-8">
-          <span className="text-[10px] font-bold uppercase tracking-[.28em] text-stone-400">Quiet luxury / functional design</span>
-          <span className="text-[10px] font-bold uppercase tracking-[.28em] text-stone-400">Work · Travel · Everyday</span>
-          <span className="text-[10px] font-bold uppercase tracking-[.28em] text-stone-400">Made for movement</span>
-        </div>
-      </section>
-
-      {/* Collection */}
-      <section id="collection" className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32">
-        <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
+      {/* CATEGORY / SHOP THE EDIT */}
+      <section className={tw("vanta-reference-edit")}>
+        <div className={tw("vanta-reference-section-head")}>
           <div>
-            <p className="vanta-eyebrow">THE COLLECTION</p>
-            <h2 className="vanta-serif mt-5 max-w-3xl text-5xl leading-[.95] tracking-[-.035em] md:text-7xl">
-              Objects with a
-              <br />
-              <span className="italic">purpose.</span>
-            </h2>
+            <p>SHOP THE EDIT</p>
+            <h2>Find your carry.</h2>
           </div>
-          <Link to="/products" className="group inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.18em] text-stone-600 transition hover:text-stone-950">
-            View all bags <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
+          <Link to="/" className={tw("vanta-reference-view-all")}>
+            View all <ArrowRight size={15} />
           </Link>
         </div>
 
-        <div className="mt-14 grid gap-px border border-stone-200 bg-stone-200 md:grid-cols-3">
-          {[
-            ["01", "Work", "Structured protection for the things you carry every day."],
-            ["02", "Travel", "Room to move without sacrificing a clean silhouette."],
-            ["03", "Everyday", "Light, versatile forms built around real routines."],
-          ].map(([number, title, text]) => (
+        <div className={tw("vanta-reference-category-row")}>
+          {categoryItems.map(([name, slug, description], index) => (
             <Link
-              key={number}
-              to="/products"
-              className="group relative min-h-[310px] overflow-hidden bg-stone-100 p-7 transition hover:bg-stone-950 hover:text-white"
+              key={slug || name}
+              to={slug ? `/category/${slug}` : "/products"}
+              className={tw("vanta-reference-category")}
             >
-              <span className="text-[10px] font-bold tracking-[.2em] text-stone-400">{number}</span>
-              <div className="absolute bottom-7 left-7 right-7">
-                <div className="mb-7 h-px w-10 bg-stone-300 transition-all group-hover:w-20 group-hover:bg-white/40" />
-                <h3 className="vanta-serif text-4xl">{title}</h3>
-                <p className="mt-3 max-w-xs text-sm leading-6 text-stone-500 transition group-hover:text-stone-300">{text}</p>
+              <div className={tw("vanta-reference-category-image")}>
+                <img
+                  src={categoryImages[slug] || heroImage}
+                  alt={name}
+                />
+                <span className={tw("vanta-reference-category-arrow")}>
+                  <ArrowUpRight size={17} />
+                </span>
               </div>
-              <MoveUpRight className="absolute right-7 top-7 opacity-40 transition group-hover:translate-x-1 group-hover:-translate-y-1" size={18} />
+              <div className={tw("vanta-reference-category-copy")}>
+                <div>
+                  <small>{String(index + 1).padStart(2, "0")}</small>
+                  <h3>{name}</h3>
+                  <p>{description}</p>
+                </div>
+                <ArrowRight size={14} />
+              </div>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Categories */}
-      <section id="categories" className="border-y border-stone-200 bg-stone-50">
-        <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32">
-          <div className="grid gap-12 lg:grid-cols-[.7fr_1.3fr] lg:items-end">
-            <div>
-              <p className="vanta-eyebrow">EXPLORE</p>
-              <h2 className="vanta-serif mt-5 text-5xl leading-[.95] md:text-6xl">
-                Your everyday
-                <br />
-                <span className="italic">carry, elevated.</span>
-              </h2>
-            </div>
-            <p className="max-w-xl text-base leading-8 text-stone-600">
-              Every VANTA piece is designed around the same idea: remove the
-              unnecessary, keep what matters and make the result feel exceptional.
-            </p>
+      {/* NEW / NOW */}
+      <section className={tw("vanta-reference-now")}>
+        <div className={tw("vanta-reference-section-head")}>
+          <div>
+            <p>NEW / NOW</p>
+            <h2>Made for the way you move.</h2>
           </div>
+          <Link to="/" className={tw("vanta-reference-view-all")}>
+            Shop all <ArrowRight size={15} />
+          </Link>
+        </div>
 
-          <div className="mt-14 grid gap-4 md:grid-cols-3">
-            {[
-              ["01", "Laptop Bags", "Protection with a sharper profile."],
-              ["02", "Backpacks", "Balanced storage for city movement."],
-              ["03", "Travel Bags", "Space that travels beautifully."],
-            ].map(([number, title, text], index) => (
-              <Link
-                key={title}
-                to="/products"
-                className={`group relative min-h-[360px] overflow-hidden p-7 text-white ${
-                  index === 0
-                    ? "bg-stone-900"
-                    : index === 1
-                    ? "bg-stone-700"
-                    : "bg-stone-950"
-                }`}
-              >
-                <span className="text-[10px] font-bold tracking-[.25em] text-white/45">{number}</span>
-                <div className="absolute bottom-7 left-7 right-7">
-                  <Sparkles size={18} className="mb-7 text-white/45" />
-                  <h3 className="vanta-serif text-4xl">{title}</h3>
-                  <p className="mt-3 max-w-xs text-sm leading-6 text-white/55">{text}</p>
-                </div>
-                <MoveUpRight className="absolute right-7 top-7 opacity-50 transition group-hover:translate-x-1 group-hover:-translate-y-1" size={18} />
-              </Link>
-            ))}
+        <div className={tw("vanta-reference-features")}>
+          <div>
+            <span><ShieldCheck size={19} /></span>
+            <div><b>PREMIUM MATERIALS</b><small>Built to last, every time.</small></div>
+          </div>
+          <div>
+            <span><Box size={19} /></span>
+            <div><b>SMART DESIGN</b><small>Thoughtful in every detail.</small></div>
+          </div>
+          <div>
+            <span><Feather size={19} /></span>
+            <div><b>LIGHTWEIGHT</b><small>Move freely, always.</small></div>
+          </div>
+          <div>
+            <span><Droplets size={19} /></span>
+            <div><b>WATER RESISTANT</b><small>Ready for anything.</small></div>
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32">
-        <div className="border border-stone-200 bg-stone-950 px-7 py-16 text-stone-100 md:px-14 md:py-20">
-          <p className="text-[10px] font-bold uppercase tracking-[.28em] text-stone-400">VANTA BAGS</p>
-          <h2 className="vanta-serif mt-6 max-w-3xl text-5xl leading-[.95] md:text-7xl">
-            Less noise.
-            <br />
-            <span className="italic">Better carry.</span>
-          </h2>
-          <Link
-            to="/products"
-            className="mt-10 inline-flex items-center gap-4 border border-white/30 px-7 py-4 text-[11px] font-bold uppercase tracking-[.18em] transition hover:bg-white hover:text-black"
-          >
-            Discover the collection
-            <ArrowRight size={16} />
+      {/* PRODUCTS */}
+      <section className={tw("vanta-reference-products")}>
+        <div className={tw("vanta-reference-section-head")}>
+          <div>
+            <p>THE LATEST</p>
+            <h2>Pieces worth carrying.</h2>
+          </div>
+          <Link to="/" className={tw("vanta-reference-view-all")}>
+            View collection <ArrowRight size={15} />
           </Link>
         </div>
+
+        <div className={tw("vanta-reference-product-grid")}>
+          {products.slice(0, 8).map((product, index) => (
+            <Link
+              key={product._id}
+              to={`/products/${product.slug}`}
+              className={tw("vanta-reference-product")}
+            >
+              <div className={tw("vanta-reference-product-image")}>
+                {product.images?.[0] ? (
+                  <img src={product.images[0]} alt={product.name} />
+                ) : (
+                  <span>VANTA</span>
+                )}
+                <span className={tw("vanta-reference-product-number")}>
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Wishlist"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <Heart size={16} />
+                </button>
+              </div>
+              <div className={tw("vanta-reference-product-meta")}>
+                <h3>{product.name}</h3>
+                <p>{money(product.price)}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className={tw("vanta-reference-bottom")}>
+        <p>VANTA / THE STANDARD</p>
+        <h2>
+          Carry less.
+          <br />
+          <em>Live more.</em>
+        </h2>
+        <Link to="/" className={tw("vanta-reference-solid-btn")}>
+          Shop the collection <ArrowRight size={16} />
+        </Link>
       </section>
     </main>
   );
-};
-
-export default Home;
+}

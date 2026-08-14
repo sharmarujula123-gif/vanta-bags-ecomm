@@ -5,6 +5,7 @@ import {
     getProductBySlug,
     updateProduct,
     deactivateProduct,
+    activateProduct,
     updateProductStock,
   } from "../controllers/productController.js";
 
@@ -38,6 +39,13 @@ router.put(
     updateProductStock
   );
   
+  router.patch(
+    "/:id/activate",
+    authenticateUser,
+    requireAdmin,
+    activateProduct
+  );
+
   router.delete(
     "/:id",
     authenticateUser,
