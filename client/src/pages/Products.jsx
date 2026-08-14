@@ -99,10 +99,6 @@ const normalizeImageUrl = (value) => {
   return value.trim();
 };
 
-const PRICE_MIN = 0;
-const PRICE_MAX = 10000;
-const PRICE_STEP = 100;
-
 const Products = ({ categorySlug = "" }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlCategory = searchParams.get("category") || categorySlug || "";
@@ -116,9 +112,6 @@ const Products = ({ categorySlug = "" }) => {
   const [sort, setSort] = useState("newest");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  
-  const [appliedMinPrice, setAppliedMinPrice] = useState("");
-  const [appliedMaxPrice, setAppliedMaxPrice] = useState("");
   const [featured, setFeatured] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({
@@ -188,11 +181,6 @@ const Products = ({ categorySlug = "" }) => {
 
   const activeCategoryId = getCategoryId(activeCategory);
 
-  const selectedMinPrice =
-    minPrice === "" ? PRICE_MIN : Math.min(PRICE_MAX, Math.max(PRICE_MIN, Number(minPrice)));
-  const selectedMaxPrice =
-    maxPrice === "" ? PRICE_MAX : Math.min(PRICE_MAX, Math.max(PRICE_MIN, Number(maxPrice)));
-
   useEffect(() => {
     if (selectedCategory && categoriesLoading) {
       setLoading(true);
@@ -210,8 +198,8 @@ const Products = ({ categorySlug = "" }) => {
     const productMatches = (product) => {
       const price = Number(product?.price);
       if (!Number.isFinite(price)) return false;
-      if (appliedMinPrice !== "" && price < Number(appliedMinPrice)) return false;
-      if (appliedMaxPrice !== "" && price > Number(appliedMaxPrice)) return false;
+      if (minPrice !== "" && price < Number(minPrice)) return false;
+      if (maxPrice !== "" && price > Number(maxPrice)) return false;
       if (featured && !product?.isFeatured) return false;
       return true;
     };
@@ -243,8 +231,8 @@ const Products = ({ categorySlug = "" }) => {
       setError("");
 
       try {
-        const min = appliedMinPrice === "" ? null : Number(appliedMinPrice);
-        const max = appliedMaxPrice === "" ? null : Number(appliedMaxPrice);
+        const min = minPrice === "" ? null : Number(minPrice);
+        const max = maxPrice === "" ? null : Number(maxPrice);
 
         if (min !== null && max !== null && (Number.isNaN(min) || Number.isNaN(max) || min > max)) {
           setProducts([]);
@@ -320,7 +308,7 @@ const Products = ({ categorySlug = "" }) => {
     };
 
     loadProducts();
-  }, [search, selectedCategory, activeCategoryId, categoriesLoading, sort, appliedMinPrice, appliedMaxPrice, featured, page, retryKey]);
+  }, [search, selectedCategory, activeCategoryId, categoriesLoading, sort, minPrice, maxPrice, featured, page, retryKey]);
 
   const activeCategoryName = activeCategory?.name || "";
 
@@ -332,7 +320,7 @@ const Products = ({ categorySlug = "" }) => {
     };
 
   const hasFilters =
-    search || selectedCategory || appliedMinPrice || appliedMaxPrice || featured;
+    search || selectedCategory || minPrice || maxPrice || featured;
 
   const toggleWishlist = (productId) => {
     setWishlist((current) =>
@@ -382,8 +370,6 @@ const Products = ({ categorySlug = "" }) => {
     setSort("newest");
     setMinPrice("");
     setMaxPrice("");
-    setAppliedMinPrice("");
-    setAppliedMaxPrice("");
     setFeatured(false);
     setPage(1);
     setSearchParams({});
@@ -516,53 +502,59 @@ const Products = ({ categorySlug = "" }) => {
                 <span>Price Range</span>
                 <ChevronDown size={14} />
               </div>
-
-              <div className="mt-5 px-1">
-                <div className="relative h-6">
-                  <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-neutral-700" />
-                  <div
-                    className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-white"
-                    style={{
-                      left: `${((selectedMinPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`,
-                      right: `${100 - ((selectedMaxPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`,
-                    }}
-                  />
+              <div className={tw("vanta-price-inputs")}>
+                <label>
+                  <span>From</span>
                   <input
-                    aria-label="Minimum price"
-                    type="range"
-                    min={PRICE_MIN}
-                    max={Math.max(PRICE_MIN, selectedMaxPrice - PRICE_STEP)}
-                    step={PRICE_STEP}
-                    value={selectedMinPrice}
+                    type="number"
+                    min="0"
+                    value={minPrice}
                     onChange={(event) => {
-                      const next = Math.max(PRICE_MIN, Math.min(Number(event.target.value), selectedMaxPrice - PRICE_STEP));
-                      setMinPrice(String(next));
-                      setAppliedMinPrice(String(next));
-                      setPage(1);
+                      const value = event.target.value;
+                      if (value === "" || Number(value) >= 0) {
+                        setMinPrice(value);
+                        setPage(1);
+                      }
                     }}
-                    className="absolute inset-0 z-20 h-6 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-white [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-white"
+                    placeholder="₹0"
                   />
+                </label>
+                <label>
+                  <span>To</span>
                   <input
-                    aria-label="Maximum price"
-                    type="range"
-                    min={Math.min(PRICE_MAX, selectedMinPrice + PRICE_STEP)}
-                    max={PRICE_MAX}
-                    step={PRICE_STEP}
-                    value={selectedMaxPrice}
+                    type="number"
+                    min="0"
+                    value={maxPrice}
                     onChange={(event) => {
-                      const next = Math.min(PRICE_MAX, Math.max(Number(event.target.value), selectedMinPrice + PRICE_STEP));
-                      setMaxPrice(String(next));
-                      setAppliedMaxPrice(String(next));
-                      setPage(1);
+                      const value = event.target.value;
+                      if (value === "" || Number(value) >= 0) {
+                        setMaxPrice(value);
+                        setPage(1);
+                      }
                     }}
-                    className="absolute inset-0 z-30 h-6 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-white [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-white"
+                    placeholder="₹10,000"
                   />
-                </div>
-                <div className="mt-4 flex items-center justify-between text-sm font-medium text-white">
-                  <span>₹{selectedMinPrice.toLocaleString("en-IN")}</span>
-                  <span>₹{selectedMaxPrice.toLocaleString("en-IN")}</span>
-                </div>
+                </label>
               </div>
+              <div className={tw("vanta-price-line")}>
+                <span />
+                <span />
+              </div>
+            </div>
+
+            <div className={tw("vanta-filter-block")}>
+              <div className={tw("vanta-filter-title")}>
+                <span>Color</span>
+                <ChevronDown size={14} />
+              </div>
+              <div className={tw("vanta-color-swatches")}>
+                <button type="button" aria-label="Black" className="black" />
+                <button type="button" aria-label="Grey" className="grey" />
+                <button type="button" aria-label="Blue" className="blue" />
+                <button type="button" aria-label="Brown" className="brown" />
+                <button type="button" aria-label="Cream" className="cream" />
+              </div>
+              <p className={tw("vanta-filter-note")}>Available colors depend on the selected product.</p>
             </div>
 
             <div className={tw("vanta-filter-block")}>

@@ -173,26 +173,16 @@ export const getProducts = async (req, res) => {
     }
 
     // Price range
-    // Price range. Only add a bound when it is a real finite number.
-    const parsedMinPrice = minPrice !== undefined && minPrice !== "" ? Number(minPrice) : null;
-    const parsedMaxPrice = maxPrice !== undefined && maxPrice !== "" ? Number(maxPrice) : null;
-
-    if (parsedMinPrice !== null && (!Number.isFinite(parsedMinPrice) || parsedMinPrice < 0)) {
-      return res.status(400).json({ success: false, message: "Invalid minimum price" });
-    }
-
-    if (parsedMaxPrice !== null && (!Number.isFinite(parsedMaxPrice) || parsedMaxPrice < 0)) {
-      return res.status(400).json({ success: false, message: "Invalid maximum price" });
-    }
-
-    if (parsedMinPrice !== null && parsedMaxPrice !== null && parsedMinPrice > parsedMaxPrice) {
-      return res.status(400).json({ success: false, message: "Minimum price cannot be greater than maximum price" });
-    }
-
-    if (parsedMinPrice !== null || parsedMaxPrice !== null) {
+    if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {};
-      if (parsedMinPrice !== null) filter.price.$gte = parsedMinPrice;
-      if (parsedMaxPrice !== null) filter.price.$lte = parsedMaxPrice;
+  
+      if (minPrice !== undefined) {
+        filter.price.$gte = Number(minPrice);
+      }
+  
+      if (maxPrice !== undefined) {
+        filter.price.$lte = Number(maxPrice);
+      }
     }
   
     // Featured
