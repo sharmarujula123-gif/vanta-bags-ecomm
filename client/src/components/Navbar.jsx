@@ -1,30 +1,30 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { tw } from "../utils/twStyles.js";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
   Moon,
   ShoppingBag,
+  Heart,
   Sun,
-  User,
+  UserRound,
+  Search,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import useAuthStore from "../store/authStore";
 import useCartStore from "../store/cartStore";
+import { useAuthModal } from "../context/AuthModalContext";
 
 const getInitialTheme = () => {
   if (typeof window === "undefined") return "light";
-
   const saved = localStorage.getItem("vanta-theme");
   if (saved === "dark" || saved === "light") return saved;
-
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
 const Navbar = () => {
   const navigate = useNavigate();
-
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
 
@@ -33,6 +33,7 @@ const Navbar = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const logout = useAuthStore((state) => state.logout);
   const fetchCart = useCartStore((state) => state.fetchCart);
+  const { openAuth } = useAuthModal();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -40,163 +41,97 @@ const Navbar = () => {
   }, [theme]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchCart().catch(() => {});
-    }
+    if (isAuthenticated) fetchCart().catch(() => {});
   }, [isAuthenticated, fetchCart]);
-
-  const toggleTheme = () => {
-    setTheme((current) => (current === "dark" ? "light" : "dark"));
-  };
 
   const handleLogout = async () => {
     await logout();
     setMobileMenuOpen(false);
-    navigate("/login");
+    navigate("/");
   };
 
+  const isHome = location.pathname === "/";
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
-  const navLinkClass = ({ isActive }) =>
-    `relative text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
-      isActive
-        ? "text-stone-950 after:absolute after:-bottom-2 after:left-0 after:h-px after:w-full after:bg-stone-950"
-        : "text-stone-500 hover:text-stone-950"
-    }`;
-
-  const iconButton =
-    "flex h-10 w-10 items-center justify-center rounded-full border border-stone-300 text-stone-700 transition hover:border-stone-950 hover:text-stone-950";
-
   return (
-    <header className="sticky top-0 z-50 border-b border-stone-200 bg-stone-100/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 lg:px-8">
-        <Link
-          to="/"
-          onClick={closeMobileMenu}
-          className="group flex items-center gap-3 text-stone-950"
-        >
-          <span className="flex h-9 w-9 items-center justify-center border border-stone-950 text-[10px] font-bold tracking-[0.12em] transition group-hover:rotate-45">
-            V
-          </span>
-          <span className="text-[18px] font-bold tracking-[0.34em]">
+    <header className={tw(`vanta-header vanta-reference-header ${isHome ? "vanta-header-home" : ""}`)}>
+      <div className={tw("vanta-promo")}>Free shipping on orders above ₹999</div>
+
+      <div className={tw("vanta-reference-navbar")}>
+        <div className={tw("vanta-reference-navbar-inner")}>
+          <Link to="/" className={tw("vanta-reference-logo")} onClick={closeMobileMenu}>
             VANTA
-          </span>
-        </Link>
-
-        <nav className="hidden items-center gap-9 md:flex">
-          <NavLink to="/" className={navLinkClass}>Home</NavLink>
-          <NavLink to="/products" className={navLinkClass}>Collection</NavLink>
-          <a
-            href="/#categories"
-            className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500 transition hover:text-stone-950"
-          >
-            Categories
-          </a>
-        </nav>
-
-        <div className="hidden items-center gap-2 md:flex">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className={iconButton}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          >
-            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
-
-          <Link
-            to="/cart"
-            className={`${iconButton} relative`}
-            aria-label="Shopping cart"
-          >
-            <ShoppingBag size={18} strokeWidth={1.7} />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-stone-950 px-1 text-[8px] font-bold text-white">
-                {cartCount}
-              </span>
-            )}
           </Link>
 
-          {isAuthenticated ? (
-            <div className="ml-2 flex items-center gap-3 border-l border-stone-200 pl-4">
-              <Link
-                to="/account"
-                className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-600 transition hover:text-stone-950"
-              >
-                <User size={17} strokeWidth={1.7} />
-                <span>{user?.name}</span>
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-500 transition hover:text-stone-950"
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <Link
-              to="/login"
-              className="ml-2 border border-stone-950 bg-stone-950 px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white transition hover:opacity-80"
-            >
-              Login
-            </Link>
-          )}
-        </div>
+          <nav className={tw("vanta-reference-main-nav")}>
+            <NavLink to="/">Home</NavLink>
+            <NavLink to="/products">Collection</NavLink>
+            <Link to="/about">About</Link>
+            <Link to="/category">Category</Link>
+          </nav>
 
-        <div className="flex items-center gap-2 md:hidden">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className={iconButton}
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
-
-          <Link
-            to="/cart"
-            className={`${iconButton} relative`}
-            aria-label="Shopping cart"
-          >
-            <ShoppingBag size={18} />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-stone-950 px-1 text-[8px] font-bold text-white">
-                {cartCount}
-              </span>
-            )}
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((current) => !current)}
-            className={iconButton}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={19} /> : <Menu size={19} />}
-          </button>
-        </div>
-      </div>
-
-      {mobileMenuOpen && (
-        <div className="border-t border-stone-200 bg-stone-100 md:hidden">
-          <nav className="mx-auto flex max-w-7xl flex-col px-5 py-3">
-            <NavLink to="/" onClick={closeMobileMenu} className="border-b border-stone-200 py-4 text-[11px] font-semibold uppercase tracking-[0.16em]">Home</NavLink>
-            <NavLink to="/products" onClick={closeMobileMenu} className="border-b border-stone-200 py-4 text-[11px] font-semibold uppercase tracking-[0.16em]">Collection</NavLink>
-            <a href="/#categories" onClick={closeMobileMenu} className="border-b border-stone-200 py-4 text-[11px] font-semibold uppercase tracking-[0.16em]">Categories</a>
+          <div className={tw("vanta-reference-actions")}>
+            <button type="button" onClick={() => {}} aria-label="Search">
+              <Search size={22} strokeWidth={1.5} />
+            </button>
 
             {isAuthenticated ? (
-              <>
-                <Link to="/account" onClick={closeMobileMenu} className="border-b border-stone-200 py-4 text-[11px] font-semibold uppercase tracking-[0.16em]">Account</Link>
-                <button type="button" onClick={handleLogout} className="py-4 text-left text-[11px] font-semibold uppercase tracking-[0.16em]">Logout</button>
-              </>
+              <Link to="/account" aria-label="Account" className={tw("vanta-reference-icon-link")}>
+                <UserRound size={22} strokeWidth={1.5} />
+              </Link>
             ) : (
-              <Link to="/login" onClick={closeMobileMenu} className="py-4 text-[11px] font-semibold uppercase tracking-[0.16em]">Login</Link>
+              <button type="button" onClick={() => openAuth("login")} aria-label="Login">
+                <UserRound size={22} strokeWidth={1.5} />
+              </button>
             )}
-          </nav>
+
+            <Link to="/cart" aria-label="Cart" className={tw("vanta-reference-cart")}>
+              <ShoppingBag size={22} strokeWidth={1.5} />
+              {cartCount > 0 && <span>{cartCount}</span>}
+            </Link>
+
+            {!isAuthenticated && (
+              <div className={tw("vanta-reference-auth")}>
+                <button type="button" onClick={() => openAuth("login")}>Login</button>
+                <span>/</span>
+                <button type="button" onClick={() => openAuth("register")}>Register</button>
+              </div>
+            )}
+
+            {isAuthenticated && (
+              <button type="button" className={tw("vanta-reference-user-name")} onClick={handleLogout}>
+                {user?.name || "Logout"}
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className={tw("vanta-reference-mobile-toggle")}
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-label="Menu"
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
-      )}
+
+        {mobileMenuOpen && (
+          <div className={tw("vanta-reference-mobile-menu")}>
+            <NavLink to="/products" onClick={closeMobileMenu}>Shop</NavLink>
+            <NavLink to="/products" onClick={closeMobileMenu}>Collection</NavLink>
+            <Link to="/about" onClick={closeMobileMenu}>About</Link>
+            <Link to="/journal" onClick={closeMobileMenu}>Journal</Link>
+            {!isAuthenticated ? (
+              <div className={tw("vanta-reference-mobile-auth")}>
+                <button type="button" onClick={() => { closeMobileMenu(); openAuth("login"); }}>Login</button>
+                <button type="button" onClick={() => { closeMobileMenu(); openAuth("register"); }}>Register</button>
+              </div>
+            ) : (
+              <button type="button" onClick={handleLogout}>Logout</button>
+            )}
+          </div>
+        )}
+      </div>
     </header>
   );
 };

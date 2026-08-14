@@ -1,9 +1,10 @@
+import { tw } from "../utils/twStyles.js";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="border-t border-stone-800 bg-stone-950 text-stone-100">
+    <footer className={tw("vanta-footer border-t border-stone-800 bg-stone-950 text-stone-100")}>
       <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-20">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
@@ -53,18 +54,11 @@ const Footer = () => {
 
             <nav className="mt-6 flex flex-col gap-4 text-sm text-stone-400">
               <Link
-                to="/products"
+                to="/"
                 className="transition hover:text-white"
               >
                 Collection
               </Link>
-
-              <a
-                href="/#categories"
-                className="transition hover:text-white"
-              >
-                Categories
-              </a>
 
               <Link
                 to="/cart"
