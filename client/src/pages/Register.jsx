@@ -1,40 +1,44 @@
+import { tw } from "../utils/twStyles.js";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, LockKeyhole, Mail, UserRound } from "lucide-react";
 import useAuthStore from "../store/authStore";
+import { useAuthModal } from "../context/AuthModalContext";
 
 const Register = () => {
   const navigate = useNavigate();
-
   const register = useAuthStore((state) => state.register);
+  const { closeAuth, switchAuth } = useAuthModal();
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
-
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (event) => {
-    setFormData({
-      ...formData,
+    setFormData((current) => ({
+      ...current,
       [event.target.name]: event.target.value,
-    });
+    }));
+    if (error) setError("");
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     setError("");
     setLoading(true);
 
     try {
       await register(formData);
-      navigate("/");
-    } catch (error) {
+      closeAuth();
+      navigate("/", { replace: true });
+    } catch (requestError) {
       setError(
-        error.response?.data?.message ||
+        requestError.response?.data?.message ||
           "Unable to create your account."
       );
     } finally {
@@ -43,62 +47,88 @@ const Register = () => {
   };
 
   return (
-    <main>
-      <h1>Create Account</h1>
+    <div className={tw("vanta-auth-content")}>
+      <div className={tw("vanta-auth-heading")}>
+        <p className={tw("vanta-auth-kicker")}>VANTA BAGS</p>
+        <h2 id="vanta-auth-title">Create account</h2>
+        <p>Welcome to VANTA.</p>
+        <small>Create your account to continue</small>
+      </div>
 
-      {error && <p>{error}</p>}
+      {error && <div className={tw("vanta-auth-error")}>{error}</div>}
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="name">Name</label>
+      <form className={tw("vanta-auth-form")} onSubmit={handleSubmit}>
+        <label className={tw("vanta-auth-field")}>
+          <span>Full Name</span>
+          <div className={tw("vanta-auth-input-wrap")}>
+            <UserRound size={14} />
+            <input
+              name="name"
+              type="text"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your name"
+              autoComplete="name"
+              required
+            />
+          </div>
+        </label>
 
-          <input
-            id="name"
-            name="name"
-            type="text"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <label className={tw("vanta-auth-field")}>
+          <span>Email Address</span>
+          <div className={tw("vanta-auth-input-wrap")}>
+            <Mail size={14} />
+            <input
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              autoComplete="email"
+              required
+            />
+          </div>
+        </label>
 
-        <div>
-          <label htmlFor="email">Email</label>
+        <label className={tw("vanta-auth-field")}>
+          <span>Password</span>
+          <div className={tw("vanta-auth-input-wrap")}>
+            <LockKeyhole size={14} />
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create a password"
+              autoComplete="new-password"
+              minLength={6}
+              required
+            />
+            <button
+              type="button"
+              className={tw("vanta-auth-password-toggle")}
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+        </label>
 
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password">Password</label>
-
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            minLength={6}
-            required
-          />
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Creating account..." : "Create Account"}
+        <button className={tw("vanta-auth-submit")} type="submit" disabled={loading}>
+          {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
 
-      <p>
+      <div className={tw("vanta-auth-divider")}><span>secure checkout ready</span></div>
+
+      <p className={tw("vanta-auth-switch")}>
         Already have an account?{" "}
-        <Link to="/login">Login</Link>
+        <button type="button" onClick={() => switchAuth("login")}>
+          Login
+        </button>
       </p>
-    </main>
+    </div>
   );
 };
 
