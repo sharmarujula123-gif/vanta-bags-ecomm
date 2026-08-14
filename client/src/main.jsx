@@ -4,6 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import App from "./App.jsx";
+import { AuthModalProvider } from "./context/AuthModalContext.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import useAuthStore from "./store/authStore.js";
 
 import "./index.css";
@@ -28,7 +30,9 @@ initializeAuth().finally(() => {
   createRoot(document.getElementById("root")).render(
     <StrictMode>
       <BrowserRouter>
-        <App />
+        <AuthModalProvider>
+          <ErrorBoundary><App /></ErrorBoundary>
+        </AuthModalProvider>
         <Toaster
           position="top-right"
           toastOptions={{

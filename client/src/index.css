@@ -1,147 +1,40 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap");
 @import "tailwindcss";
-
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   color-scheme: light;
-  --vanta-bg: #f4f1eb;
-  --vanta-surface: #fbfaf7;
-  --vanta-surface-2: #ece8df;
-  --vanta-text: #171614;
-  --vanta-muted: #706b63;
-  --vanta-border: #d8d2c7;
-  --vanta-strong: #11100f;
-  --vanta-inverse: #f7f4ee;
-  --vanta-accent: #b99a68;
+  --vanta-bg: #f7f6f2;
+  --vanta-surface: #ffffff;
+  --vanta-soft: #efede7;
+  --vanta-text: #111111;
+  --vanta-muted: #68665f;
+  --vanta-border: #dedcd5;
+  --vanta-dark: #111313;
+  --vanta-accent: #b69a6d;
+  --vanta-radius: 2px;
 }
 
 html.dark {
   color-scheme: dark;
-  --vanta-bg: #0d0d0c;
-  --vanta-surface: #141412;
-  --vanta-surface-2: #1c1b18;
-  --vanta-text: #f4f1e9;
-  --vanta-muted: #a49f94;
-  --vanta-border: #302e29;
-  --vanta-strong: #f4f1e9;
-  --vanta-inverse: #0d0d0c;
-  --vanta-accent: #c5a46f;
+  --vanta-bg: #0d0e0e;
+  --vanta-surface: #151716;
+  --vanta-soft: #1c1e1d;
+  --vanta-text: #f2f0e9;
+  --vanta-muted: #aaa89f;
+  --vanta-border: #30322f;
+  --vanta-dark: #f2f0e9;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
+html { scroll-behavior: smooth; }
 body {
   margin: 0;
   min-width: 320px;
   background: var(--vanta-bg);
   color: var(--vanta-text);
-  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  transition: background-color 220ms ease, color 220ms ease;
+  font-family: "DM Sans", system-ui, sans-serif;
+  transition: background .25s ease, color .25s ease;
 }
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-::selection {
-  background: var(--vanta-text);
-  color: var(--vanta-bg);
-}
-
-/* Premium dark-theme bridge for the existing Tailwind UI */
-.dark .bg-stone-100,
-.dark .bg-stone-100\/95 { background-color: var(--vanta-bg) !important; }
-.dark .bg-stone-50 { background-color: var(--vanta-surface) !important; }
-.dark .bg-stone-200 { background-color: var(--vanta-surface-2) !important; }
-.dark .bg-stone-300 { background-color: #292823 !important; }
-.dark .bg-stone-900,
-.dark .bg-stone-950 { background-color: #f4f1e9 !important; color: #11100f !important; }
-.dark .bg-white { background-color: var(--vanta-surface) !important; }
-
-.dark .text-stone-950,
-.dark .text-stone-900 { color: var(--vanta-text) !important; }
-.dark .text-stone-700,
-.dark .text-stone-600 { color: #c3beb3 !important; }
-.dark .text-stone-500 { color: var(--vanta-muted) !important; }
-.dark .text-stone-400 { color: #858076 !important; }
-.dark .text-stone-300 { color: #aaa59b !important; }
-.dark .text-stone-100 { color: #151412 !important; }
-.dark .text-white { color: #11100f !important; }
-
-.dark .border-stone-100,
-.dark .border-stone-200,
-.dark .border-stone-300,
-.dark .border-stone-400 { border-color: var(--vanta-border) !important; }
-.dark .border-stone-700,
-.dark .border-stone-800,
-.dark .border-stone-900,
-.dark .border-stone-950 { border-color: #3a3730 !important; }
-
-.dark .divide-stone-100,
-.dark .divide-stone-200 { border-color: var(--vanta-border) !important; }
-
-.dark .hover\:bg-stone-50:hover { background-color: #1b1a17 !important; }
-.dark .hover\:bg-stone-100:hover { background-color: #25231f !important; }
-.dark .hover\:bg-stone-700:hover,
-.dark .hover\:bg-stone-800:hover,
-.dark .hover\:bg-stone-900:hover { background-color: #ded8cc !important; color: #11100f !important; }
-.dark .hover\:text-stone-950:hover { color: #fff !important; }
-.dark .hover\:border-stone-950:hover { border-color: #f4f1e9 !important; }
-
-.dark input,
-.dark select,
-.dark textarea {
-  color: var(--vanta-text);
-  background-color: var(--vanta-surface);
-  border-color: var(--vanta-border);
-}
-
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: #77736b;
-}
-
-.dark option {
-  background: #171613;
-  color: #f4f1e9;
-}
-
-/* Shared premium surfaces */
-.vanta-glass {
-  background: color-mix(in srgb, var(--vanta-surface) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--vanta-border) 72%, transparent);
-  backdrop-filter: blur(18px);
-}
-
-.vanta-eyebrow {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .28em;
-  text-transform: uppercase;
-  color: var(--vanta-muted);
-}
-
-.vanta-serif {
-  font-family: "Playfair Display", Georgia, serif;
-}
-
-.vanta-ring {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--vanta-text) 8%, transparent);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .vanta-reveal {
-    animation: vanta-reveal 700ms cubic-bezier(.2,.7,.2,1) both;
-  }
-}
-
-@keyframes vanta-reveal {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+button,input,select,textarea { font: inherit; }
+button { cursor: pointer; }
+::selection { background: var(--vanta-text); color: var(--vanta-bg); }

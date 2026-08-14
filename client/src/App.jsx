@@ -1,12 +1,14 @@
+import { tw } from "./utils/twStyles.js";
 import { Routes, Route } from "react-router-dom";
 
 import MainLayout from "./layouts/MainLayout";
 
 import Home from "./pages/Home";
 import Products from "./pages/Products";
+import Category from "./pages/Category";
+import About from "./pages/About";
 import ProductDetails from "./pages/ProductDetails";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import AuthEntry from "./pages/AuthEntry";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderDetails from "./pages/OrderDetails";
@@ -14,6 +16,8 @@ import Orders from "./pages/Orders";
 import Account from "./pages/Account";
 import Addresses from "./pages/Addresses";
 import OrderSuccess from "./pages/OrderSuccess";
+import Wishlist from "./pages/Wishlist";
+import RecentlyViewed from "./pages/RecentlyViewed";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminRoute from "./components/AdminRoute";
 
@@ -29,17 +33,22 @@ function App() {
         <Route path="/" element={<Home />} />
 
         <Route path="/products" element={<Products />} />
+        <Route path="/category" element={<Category />} />
+        <Route path="/category/:slug" element={<Category />} />
 
         <Route
           path="/products/:slug"
           element={<ProductDetails />}
         />
+        <Route path="/about" element={<About />} />
 
         <Route path="/cart" element={<Cart />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/recently-viewed" element={<RecentlyViewed />} />
 
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<AuthEntry mode="login" />} />
 
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<AuthEntry mode="register" />} />
 
         <Route path="/checkout" element={<Checkout />} />
 
@@ -94,6 +103,7 @@ function App() {
   </Route>
 </Route>
 
+        <Route path="*" element={<main className="mx-auto max-w-3xl px-5 py-24 text-center"><p className={tw("vanta-eyebrow")}>404</p><h1 className={tw("vanta-serif mt-4 text-6xl")}>Page not found.</h1><a href="/" className="mt-8 inline-flex bg-stone-950 px-6 py-3 text-sm font-semibold text-white">Return home</a></main>} />
       </Route>
     </Routes>
   );
