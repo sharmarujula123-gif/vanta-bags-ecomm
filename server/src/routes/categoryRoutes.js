@@ -4,7 +4,7 @@ import {
   createCategory,
   getCategories,
   getCategoryBySlug,
-} from "../controllers/CategoryController.js";
+} from "../controllers/categoryController.js";
 
 import authenticateUser from "../middleware/authenticateUser.js";
 import requireAdmin from "../middleware/requireAdmin.js";
