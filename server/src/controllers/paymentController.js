@@ -1,9 +1,9 @@
 import crypto from "crypto";
 
 import razorpay from "../config/razorpay.js";
-import Payment from "../models/Payment.js";
-import Order from "../models/Order.js";
-import Cart from "../models/Cart.js";
+import Payment from "../models/payment.js";
+import Order from "../models/order.js";
+import Cart from "../models/cart.js";
 
 export const createPayment = async (req, res) => {
   const { orderId } = req.body;

@@ -1,5 +1,5 @@
-import Product from "../models/Product.js";
-import Category from "../models/Category.js";
+import Product from "../models/product.js";
+import Category from "../models/category.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
 import { uploadImageBuffer } from "../config/cloudinary.js";

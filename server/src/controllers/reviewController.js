@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import Review from "../models/Review.js";
-import Product from "../models/Product.js";
-import Order from "../models/Order.js";
+import Review from "../models/review.js";
+import Product from "../models/product.js";
+import Order from "../models/order.js";
 
 export const getProductReviews = async (req, res) => {
   const reviews = await Review.find({ product: req.params.productId })
