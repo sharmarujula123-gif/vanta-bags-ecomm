@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Box,
@@ -19,7 +19,8 @@ const emptyForm = {
   price: "",
   compareAtPrice: "",
   category: "",
-  images: "",
+  imageFiles: [],
+  existingImages: [],
   stock: 0,
   sku: "",
   brand: "Vanta",
@@ -40,6 +41,21 @@ const AdminProducts = () => {
     useState(null);
 
   const [form, setForm] = useState(emptyForm);
+
+  const imageFilePreviews = useMemo(
+    () =>
+      form.imageFiles.map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      })),
+    [form.imageFiles]
+  );
+
+  useEffect(() => {
+    return () => {
+      imageFilePreviews.forEach(({ url }) => URL.revokeObjectURL(url));
+    };
+  }, [imageFilePreviews]);
 
   const loadProducts = async () => {
     try {
@@ -118,8 +134,8 @@ const AdminProducts = () => {
         product.category?._id ||
         product.category ||
         "",
-      images:
-        product.images?.join(", ") || "",
+      imageFiles: [],
+      existingImages: product.images || [],
       stock: product.stock ?? 0,
       sku: product.sku || "",
       brand: product.brand || "",
@@ -157,38 +173,57 @@ const AdminProducts = () => {
       return;
     }
 
+    if (
+      !editingProduct &&
+      form.imageFiles.length === 0
+    ) {
+      toast.error("Please choose at least one product image");
+      return;
+    }
+
+    if (
+      editingProduct &&
+      form.existingImages.length === 0 &&
+      form.imageFiles.length === 0
+    ) {
+      toast.error("Please keep or choose at least one product image");
+      return;
+    }
+
     try {
       setSaving(true);
 
-      const payload = {
-        name: form.name.trim(),
-        description:
-          form.description.trim(),
+      const payload = new FormData();
 
-        price: Number(form.price),
+      payload.append("name", form.name.trim());
+      payload.append("description", form.description.trim());
+      payload.append("price", String(Number(form.price)));
 
-        compareAtPrice:
-          form.compareAtPrice === ""
-            ? undefined
-            : Number(form.compareAtPrice),
+      if (form.compareAtPrice !== "") {
+        payload.append(
+          "compareAtPrice",
+          String(Number(form.compareAtPrice))
+        );
+      }
 
-        category: form.category,
+      payload.append("category", form.category);
+      payload.append("stock", String(Number(form.stock)));
+      payload.append("sku", form.sku.trim());
+      payload.append("brand", form.brand.trim());
+      payload.append("material", form.material.trim());
+      payload.append("color", form.color.trim());
+      payload.append("isFeatured", String(form.isFeatured));
 
-        images: form.images
-          .split(",")
-          .map((image) => image.trim())
-          .filter(Boolean),
+      if (editingProduct) {
+        payload.append(
+          "existingImages",
+          JSON.stringify(form.existingImages)
+        );
+      }
 
-        stock: Number(form.stock),
-
-        sku: form.sku.trim(),
-
-        brand: form.brand.trim(),
-        material: form.material.trim(),
-        color: form.color.trim(),
-
-        isFeatured: form.isFeatured,
-      };
+      form.imageFiles.forEach((file) => {
+        payload.append("images", file);
+      });
 
       if (editingProduct) {
         const data =
@@ -778,19 +813,109 @@ const AdminProducts = () => {
 
                 <div className="sm:col-span-2">
                   <label className="text-xs font-semibold">
-                    Image URLs
+                    Product Images
                   </label>
 
-                  <input
-                    name="images"
-                    value={form.images}
-                    onChange={handleChange}
-                    className="mt-2 h-11 w-full border border-stone-300 px-3 text-sm outline-none focus:border-stone-950"
-                    placeholder="https://..., https://..."
-                  />
+                  <label
+                    htmlFor="product-images"
+                    className="mt-2 flex min-h-32 cursor-pointer flex-col items-center justify-center border border-dashed border-stone-300 bg-stone-50 px-5 py-7 text-center hover:border-stone-950 hover:bg-white"
+                  >
+                    <span className="text-2xl">📷</span>
+                    <span className="mt-2 text-sm font-semibold">
+                      Choose Images
+                    </span>
+                    <span className="mt-1 text-[11px] text-stone-400">
+                      JPG, JPEG, PNG or WEBP · up to 5 MB each · max 10
+                    </span>
+                    <input
+                      id="product-images"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      multiple
+                      onChange={(event) => {
+                        const files = Array.from(event.target.files || []);
+                        setForm((current) => ({
+                          ...current,
+                          imageFiles: [
+                            ...current.imageFiles,
+                            ...files,
+                          ],
+                        }));
+                        event.target.value = "";
+                      }}
+                      className="hidden"
+                    />
+                  </label>
 
-                  <p className="mt-1 text-[11px] text-stone-400">
-                    Separate multiple image URLs with commas.
+                  {(form.existingImages.length > 0 ||
+                    form.imageFiles.length > 0) && (
+                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {form.existingImages.map((image, index) => (
+                        <div
+                          key={`${image}-${index}`}
+                          className="group relative aspect-square overflow-hidden bg-stone-100"
+                        >
+                          <img
+                            src={image}
+                            alt={`${form.name || "Product"} ${index + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setForm((current) => ({
+                                ...current,
+                                existingImages:
+                                  current.existingImages.filter(
+                                    (_, imageIndex) =>
+                                      imageIndex !== index
+                                  ),
+                              }))
+                            }
+                            className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-stone-950 shadow hover:bg-white"
+                            aria-label="Remove image"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+
+                      {form.imageFiles.map((file, index) => (
+                        <div
+                          key={`${file.name}-${file.lastModified}-${index}`}
+                          className="group relative aspect-square overflow-hidden bg-stone-100"
+                        >
+                          <img
+                            src={imageFilePreviews[index]?.url}
+                            alt={file.name}
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setForm((current) => ({
+                                ...current,
+                                imageFiles:
+                                  current.imageFiles.filter(
+                                    (_, fileIndex) =>
+                                      fileIndex !== index
+                                  ),
+                              }))
+                            }
+                            className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-stone-950 shadow hover:bg-white"
+                            aria-label="Remove selected image"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="mt-2 text-[11px] text-stone-400">
+                    {editingProduct
+                      ? "Keep existing images, remove them, or add new images."
+                      : "Choose one or more images. The backend uploads them to Cloudinary automatically."}
                   </p>
                 </div>
 

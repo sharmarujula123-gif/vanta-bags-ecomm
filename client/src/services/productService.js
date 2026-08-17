@@ -31,7 +31,12 @@ const getProductsByCategory = async (categoryId) => {
 const createProduct = async (productData) => {
   const response = await api.post(
     "/products",
-    productData
+    productData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
   );
 
   return response.data;
@@ -40,7 +45,12 @@ const createProduct = async (productData) => {
 const updateProduct = async (id, productData) => {
   const response = await api.put(
     `/products/${id}`,
-    productData
+    productData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
   );
 
   return response.data;
