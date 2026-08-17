@@ -16,23 +16,20 @@ import {
 import { Link } from "react-router-dom";
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
+import heroImage from "../assets/category/hero.jpg";
 
-const heroImage =
-  "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=2200&q=90";
 
 const categoryImages = {
   backpacks:
-    "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=900&q=90",
+    "https://res.cloudinary.com/q9toon94/image/upload/v1786813548/vanta-bags/products/backpack1.jpg",
   "duffle-bags":
-    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=90",
+    "https://res.cloudinary.com/q9toon94/image/upload/v1786810385/vanta-bags/products/dufflebag-2.jpg",
   handbags:
-    "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=90",
+    "https://res.cloudinary.com/q9toon94/image/upload/v1786812733/vanta-bags/products/handbag-4.jpg",
   "laptop-bags":
-    "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?auto=format&fit=crop&w=900&q=90",
-  "sling-bags":
-    "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=90",
+    "https://res.cloudinary.com/q9toon94/image/upload/v1786812857/vanta-bags/products/laptopbag-2.jpg",
   "travel-bags":
-    "https://images.unsplash.com/photo-1556306535-38febf6782e7?auto=format&fit=crop&w=900&q=90",
+    "https://res.cloudinary.com/q9toon94/image/upload/v1786812611/vanta-bags/products/travelbag.jpg",
 };
 
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -84,11 +81,11 @@ export default function Home() {
     <main className={tw("vanta-home vanta-reference-home")}>
       {/* HERO */}
       <section className={tw("vanta-reference-hero")}>
-        <img
-          src={heroImage}
-          alt="Vanta black bag"
-          className={tw("vanta-reference-hero-image")}
-        />
+      <img
+  src={heroImage}
+  alt="Vanta black bag"
+  className={tw("vanta-reference-hero-image")}
+/>
         <div className={tw("vanta-reference-hero-shade")} />
 
         <div className={tw("vanta-reference-hero-copy")}>
@@ -222,17 +219,214 @@ export default function Home() {
         </div>
       </section>
 
-      <section className={tw("vanta-reference-bottom")}>
-        <p>VANTA / THE STANDARD</p>
-        <h2>
-          Carry less.
-          <br />
-          <em>Live more.</em>
-        </h2>
-        <Link to="/" className={tw("vanta-reference-solid-btn")}>
-          Shop the collection <ArrowRight size={16} />
-        </Link>
-      </section>
+      <section
+  className={tw(
+    "bg-white px-4 py-16 transition-colors duration-300 dark:bg-[#0a0a0a] sm:px-6 sm:py-20 md:py-24"
+  )}
+>
+  <div className={tw("mx-auto max-w-6xl")}>
+
+    {/* Header */}
+    <div className={tw("mb-10 text-center sm:mb-12")}>
+      <p
+        className={tw(
+          "mb-3 text-[10px] uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400 sm:mb-4 sm:text-[11px]"
+        )}
+      >
+        Customer Stories
+      </p>
+
+      <h2
+        className={tw(
+          "text-3xl font-light leading-tight tracking-tight text-gray-900 dark:text-white sm:text-4xl md:text-5xl"
+        )}
+      >
+        Loved by people who
+        <br />
+        <em className={tw("font-serif")}>carry VANTA.</em>
+      </h2>
+
+      <p
+        className={tw(
+          "mx-auto mt-4 max-w-xl text-xs leading-6 text-gray-500 dark:text-gray-400 sm:text-sm sm:leading-7"
+        )}
+      >
+        Thoughtfully designed bags made for everyday movement, work, travel,
+        and everything in between.
+      </p>
+    </div>
+
+    {/* Reviews */}
+    <div className={tw("grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5")}>
+
+      {/* Review 1 */}
+      <div
+        className={tw(
+          "flex min-h-[280px] flex-col justify-between border border-gray-200 bg-white p-6 transition-colors duration-300 dark:border-white/10 dark:bg-[#151515] sm:p-7 md:p-8"
+        )}
+      >
+        <div>
+          <div
+            className={tw(
+              "mb-6 text-sm tracking-wide text-gray-900 dark:text-white"
+            )}
+          >
+            ★★★★★
+          </div>
+
+          <p
+            className={tw(
+              "text-sm leading-6 text-gray-700 dark:text-gray-300 sm:text-[15px] sm:leading-7"
+            )}
+          >
+            “The quality is much better than I expected. The bag feels
+            premium, looks minimal, and fits everything I need for work.”
+          </p>
+        </div>
+
+        <div
+          className={tw(
+            "mt-8 border-t border-gray-100 pt-5 dark:border-white/10"
+          )}
+        >
+          <p
+            className={tw(
+              "text-sm font-medium text-gray-900 dark:text-white"
+            )}
+          >
+            Arjun Mehta
+          </p>
+
+          <p
+            className={tw(
+              "mt-1 text-xs text-gray-400 dark:text-gray-500"
+            )}
+          >
+            Verified Customer
+          </p>
+        </div>
+      </div>
+
+      {/* Review 2 */}
+      <div
+        className={tw(
+          "flex min-h-[280px] flex-col justify-between border border-gray-200 bg-white p-6 transition-colors duration-300 dark:border-white/10 dark:bg-[#151515] sm:p-7 md:p-8"
+        )}
+      >
+        <div>
+          <div
+            className={tw(
+              "mb-6 text-sm tracking-wide text-gray-900 dark:text-white"
+            )}
+          >
+            ★★★★★
+          </div>
+
+          <p
+            className={tw(
+              "text-sm leading-6 text-gray-700 dark:text-gray-300 sm:text-[15px] sm:leading-7"
+            )}
+          >
+            “I bought the duffle for a weekend trip and it quickly became my
+            go-to travel bag. Clean design, plenty of space, and very
+            comfortable to carry.”
+          </p>
+        </div>
+
+        <div
+          className={tw(
+            "mt-8 border-t border-gray-100 pt-5 dark:border-white/10"
+          )}
+        >
+          <p
+            className={tw(
+              "text-sm font-medium text-gray-900 dark:text-white"
+            )}
+          >
+            Riya Kapoor
+          </p>
+
+          <p
+            className={tw(
+              "mt-1 text-xs text-gray-400 dark:text-gray-500"
+            )}
+          >
+            Verified Customer
+          </p>
+        </div>
+      </div>
+
+      {/* Review 3 */}
+      <div
+        className={tw(
+          "flex min-h-[280px] flex-col justify-between border border-gray-200 bg-white p-6 transition-colors duration-300 dark:border-white/10 dark:bg-[#151515] sm:p-7 md:p-8"
+        )}
+      >
+        <div>
+          <div
+            className={tw(
+              "mb-6 text-sm tracking-wide text-gray-900 dark:text-white"
+            )}
+          >
+            ★★★★★
+          </div>
+
+          <p
+            className={tw(
+              "text-sm leading-6 text-gray-700 dark:text-gray-300 sm:text-[15px] sm:leading-7"
+            )}
+          >
+            “Simple, stylish and practical. I love that it doesn't have huge
+            logos everywhere. VANTA has nailed the understated look.”
+          </p>
+        </div>
+
+        <div
+          className={tw(
+            "mt-8 border-t border-gray-100 pt-5 dark:border-white/10"
+          )}
+        >
+          <p
+            className={tw(
+              "text-sm font-medium text-gray-900 dark:text-white"
+            )}
+          >
+            Kabir Sharma
+          </p>
+
+          <p
+            className={tw(
+              "mt-1 text-xs text-gray-400 dark:text-gray-500"
+            )}
+          >
+            Verified Customer
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    {/* Bottom rating */}
+    <div className={tw("mt-8 text-center sm:mt-10")}>
+      <div
+        className={tw(
+          "text-sm tracking-wide text-gray-900 dark:text-white"
+        )}
+      >
+        ★★★★★
+      </div>
+
+      <p
+        className={tw(
+          "mt-2 text-xs text-gray-400 dark:text-gray-500"
+        )}
+      >
+        Rated 4.9/5 by VANTA customers
+      </p>
+    </div>
+
+  </div>
+</section> 
     </main>
   );
 }

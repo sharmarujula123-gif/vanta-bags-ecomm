@@ -38,3 +38,187 @@ body {
 button,input,select,textarea { font: inherit; }
 button { cursor: pointer; }
 ::selection { background: var(--vanta-text); color: var(--vanta-bg); }
+
+
+/* Global VANTA theme surfaces. The light theme is the default; dark is opt-in. */
+.vanta-app-shell {
+  background: var(--vanta-bg);
+  color: var(--vanta-text);
+}
+
+.vanta-theme-toggle {
+  width: 34px !important;
+  height: 34px !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.08) !important;
+  color: #fff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: .2s ease !important;
+}
+.vanta-theme-toggle:hover { transform: translateY(-1px); }
+
+/* LIGHT THEME */
+html:not(.dark) .vanta-reference-header,
+html:not(.dark) .vanta-reference-navbar { color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-reference-navbar {
+  background: rgba(255,255,255,.94) !important;
+  border-bottom-color: var(--vanta-border) !important;
+  backdrop-filter: blur(12px);
+}
+html:not(.dark) .vanta-reference-logo,
+html:not(.dark) .vanta-reference-icon-link,
+html:not(.dark) .vanta-reference-cart,
+html:not(.dark) .vanta-reference-user-name,
+html:not(.dark) .vanta-reference-main-nav a,
+html:not(.dark) .vanta-reference-actions > button,
+html:not(.dark) .vanta-reference-auth button,
+html:not(.dark) .vanta-reference-mobile-toggle { color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-reference-auth { border-left-color: var(--vanta-border) !important; }
+html:not(.dark) .vanta-theme-toggle {
+  border-color: var(--vanta-border) !important;
+  background: var(--vanta-surface) !important;
+  color: var(--vanta-text) !important;
+}
+html:not(.dark) .vanta-reference-mobile-menu {
+  background: var(--vanta-surface) !important;
+  border-top-color: var(--vanta-border) !important;
+}
+html:not(.dark) .vanta-reference-mobile-menu a,
+html:not(.dark) .vanta-reference-mobile-menu > button { color: var(--vanta-text) !important; border-bottom-color: var(--vanta-border) !important; }
+html:not(.dark) .vanta-reference-mobile-auth button { background: var(--vanta-soft) !important; border-color: var(--vanta-border) !important; color: var(--vanta-text) !important; }
+
+html:not(.dark) .vanta-reference-home,
+html:not(.dark) .vanta-reference-edit,
+html:not(.dark) .vanta-reference-now,
+html:not(.dark) .vanta-reference-products {
+  background: var(--vanta-bg) !important;
+  color: var(--vanta-text) !important;
+}
+html:not(.dark) .vanta-reference-now { border-color: var(--vanta-border) !important; }
+html:not(.dark) .vanta-reference-section-head h2,
+html:not(.dark) .vanta-reference-category-copy h3,
+html:not(.dark) .vanta-reference-product { color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-reference-category-copy p,
+html:not(.dark) .vanta-reference-category-copy small { color: var(--vanta-muted) !important; }
+html:not(.dark) .vanta-reference-category-image { border-color: var(--vanta-border) !important; background: var(--vanta-soft) !important; }
+html:not(.dark) .vanta-reference-product-image { background: var(--vanta-soft) !important; }
+html:not(.dark) .vanta-reference-features > div { border-color: var(--vanta-border) !important; }
+html:not(.dark) .vanta-reference-features span { background: var(--vanta-soft) !important; color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-reference-features b { color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-reference-features small { color: var(--vanta-muted) !important; }
+
+/* Hero remains image-led, but its content stays readable in both themes. */
+html:not(.dark) .vanta-reference-hero { background: #e9e6df !important; }
+
+/* Footer: explicitly invert the old hard-coded dark footer. */
+.vanta-footer {
+  border-top: 1px solid var(--vanta-border);
+  background: var(--vanta-surface);
+  color: var(--vanta-text);
+}
+.vanta-footer .text-stone-400 { color: var(--vanta-muted) !important; }
+.vanta-footer .text-stone-300 { color: var(--vanta-text) !important; }
+.vanta-footer .text-stone-500 { color: var(--vanta-muted) !important; }
+.vanta-footer .border-stone-800 { border-color: var(--vanta-border) !important; }
+.vanta-footer .border-stone-700 { border-color: var(--vanta-border) !important; }
+.vanta-footer a { color: var(--vanta-text); }
+.vanta-footer a:hover { color: var(--vanta-text) !important; opacity: .72; }
+.vanta-footer .bg-stone-800 { background: var(--vanta-soft) !important; }
+
+/* Keep explicit dark mode visually dark. */
+html.dark .vanta-footer {
+  background: #0b0c0c !important;
+  color: #f2f0e9 !important;
+  border-top-color: #30322f !important;
+}
+html.dark .vanta-reference-home,
+html.dark .vanta-reference-edit,
+html.dark .vanta-reference-now,
+html.dark .vanta-reference-products { background: #101110 !important; color: #f5f1e8 !important; }
+
+.vanta-mobile-theme-button { display:none; }
+@media (max-width:800px) {
+  .vanta-mobile-theme-button {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    padding:16px 0;
+    border:0;
+    border-bottom:1px solid var(--vanta-border);
+    background:transparent;
+    color:var(--vanta-text);
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    text-align:left;
+  }
+}
+
+
+/* =========================================================
+   GLOBAL VANTA THEME OVERRIDES
+   ========================================================= */
+html:not(.dark) .vanta-reference-navbar {
+  background: var(--vanta-surface) !important;
+  color: var(--vanta-text) !important;
+  border-bottom: 1px solid var(--vanta-border) !important;
+}
+html:not(.dark) .vanta-reference-navbar * {
+  color: var(--vanta-text) !important;
+}
+html:not(.dark) .vanta-reference-navbar .vanta-theme-toggle {
+  background: var(--vanta-surface) !important;
+  color: var(--vanta-text) !important;
+  border-color: var(--vanta-border) !important;
+}
+html:not(.dark) .vanta-reference-mobile-menu {
+  background: var(--vanta-surface) !important;
+  color: var(--vanta-text) !important;
+  border-color: var(--vanta-border) !important;
+}
+html:not(.dark) .vanta-reference-mobile-menu * {
+  color: var(--vanta-text) !important;
+  border-color: var(--vanta-border) !important;
+}
+html:not(.dark) .vanta-reference-home,
+html:not(.dark) .vanta-reference-edit,
+html:not(.dark) .vanta-reference-now,
+html:not(.dark) .vanta-reference-products {
+  background: var(--vanta-bg) !important;
+  color: var(--vanta-text) !important;
+}
+html:not(.dark) .vanta-reference-now { background: var(--vanta-surface) !important; }
+html:not(.dark) .vanta-reference-home h1,
+html:not(.dark) .vanta-reference-home h2,
+html:not(.dark) .vanta-reference-home h3,
+html:not(.dark) .vanta-reference-home h4,
+html:not(.dark) .vanta-reference-home a,
+html:not(.dark) .vanta-reference-home b { color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-reference-home p,
+html:not(.dark) .vanta-reference-home small { color: var(--vanta-muted) !important; }
+html:not(.dark) .vanta-reference-home .vanta-reference-hero,
+html:not(.dark) .vanta-reference-home .vanta-reference-hero * { color: #fff !important; }
+html:not(.dark) .vanta-reference-home .vanta-reference-hero p,
+html:not(.dark) .vanta-reference-home .vanta-reference-hero h1 em { color: #c69a60 !important; }
+html:not(.dark) .vanta-reference-category-image,
+html:not(.dark) .vanta-reference-product-image { background: var(--vanta-soft) !important; border-color: var(--vanta-border) !important; }
+html:not(.dark) .vanta-reference-features > div { border-color: var(--vanta-border) !important; }
+html:not(.dark) .vanta-reference-features span { background: var(--vanta-soft) !important; color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-reference-features b { color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-reference-features small { color: var(--vanta-muted) !important; }
+
+/* About page */
+html:not(.dark) .vanta-about-page { background: var(--vanta-bg) !important; color: var(--vanta-text) !important; }
+html:not(.dark) .vanta-about-page .about-panel { background: var(--vanta-surface) !important; color: var(--vanta-text) !important; border-color: var(--vanta-border) !important; }
+html:not(.dark) .vanta-about-page .about-muted { color: var(--vanta-muted) !important; }
+html:not(.dark) .vanta-about-page .about-border { border-color: var(--vanta-border) !important; }
+
+.vanta-footer { background: var(--vanta-surface) !important; color: var(--vanta-text) !important; border-color: var(--vanta-border) !important; }
+.vanta-footer a { color: var(--vanta-text) !important; }
+.vanta-footer .text-stone-400, .vanta-footer .text-stone-500 { color: var(--vanta-muted) !important; }
+.vanta-footer .text-stone-300 { color: var(--vanta-text) !important; }
+.vanta-footer .border-stone-800, .vanta-footer .border-stone-700 { border-color: var(--vanta-border) !important; }

@@ -7,7 +7,7 @@ import AuthModal from "../components/AuthModal";
 
 const MainLayout = () => {
   return (
-    <div className="min-h-screen bg-stone-100 text-stone-900 transition-colors duration-300">
+    <div className="vanta-app-shell min-h-screen transition-colors duration-300">
       <Navbar />
       <main>
         <Outlet />
