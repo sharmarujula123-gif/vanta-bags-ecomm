@@ -12,7 +12,12 @@ const app = express();
 
 app.use(helmet());
 app.use(cors(corsOptions));
-
+app.get("/", (req, res) => {
+    res.json({
+      success: true,
+      message: "Vanta Bags API is running",
+    });
+  });
 // Razorpay webhook needs the raw request body before express.json().
 app.use(
   "/api/payments/webhook",
