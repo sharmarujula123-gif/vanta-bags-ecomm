@@ -111,10 +111,6 @@ const Navbar = () => {
               {theme === "dark" ? <Sun size={18} strokeWidth={1.7} /> : <Moon size={18} strokeWidth={1.7} />}
             </button>
 
-            <button type="button" onClick={() => {}} aria-label="Search">
-              <Search size={22} strokeWidth={1.5} />
-            </button>
-
             {isAuthenticated ? (
               <div ref={profileRef} className={tw("relative")}> 
                 <button
