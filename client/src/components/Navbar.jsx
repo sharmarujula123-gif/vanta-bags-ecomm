@@ -17,6 +17,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import useAuthStore from "../store/authStore";
 import useCartStore from "../store/cartStore";
+import useWishlistStore from "../store/wishlistStore";
 import { useAuthModal } from "../context/AuthModalContext";
 
 const getInitialTheme = () => {
@@ -35,6 +36,7 @@ const Navbar = () => {
   const profileRef = useRef(null);
 
   const cartCount = useCartStore((state) => state.cartCount);
+  const wishlistCount = useWishlistStore((state) => state.items.length);
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const logout = useAuthStore((state) => state.logout);
@@ -202,6 +204,20 @@ const Navbar = () => {
               </button>
             )}
 
+            <Link
+              to="/wishlist"
+              aria-label={`Wishlist${wishlistCount ? `, ${wishlistCount} saved` : ""}`}
+              title="Wishlist"
+              className={tw("relative inline-flex items-center justify-center")}
+            >
+              <Heart size={22} strokeWidth={1.5} />
+              {wishlistCount > 0 && (
+                <span className={tw("absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--vanta-text)] px-1 text-[9px] font-bold leading-none text-[var(--vanta-bg)]")}>
+                  {wishlistCount > 9 ? "9+" : wishlistCount}
+                </span>
+              )}
+            </Link>
+
             <Link to="/cart" aria-label="Cart" className={tw("vanta-reference-cart")}>
               <ShoppingBag size={22} strokeWidth={1.5} />
               {cartCount > 0 && <span>{cartCount}</span>}
@@ -232,6 +248,9 @@ const Navbar = () => {
             <NavLink to="/products" onClick={closeMobileMenu}>Shop</NavLink>
             <NavLink to="/products" onClick={closeMobileMenu}>Collection</NavLink>
             <Link to="/about" onClick={closeMobileMenu}>About</Link>
+            <Link to="/wishlist" onClick={closeMobileMenu}>
+              Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+            </Link>
             <Link to="/journal" onClick={closeMobileMenu}>Journal</Link>
             <button
               type="button"

@@ -12,6 +12,7 @@ import {
 
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
+import useWishlistStore from "../store/wishlistStore";
 
 const CATEGORY_HEROES = {
 	backpacks: {
@@ -112,6 +113,9 @@ const Products = ({ categorySlug = "" }) => {
 	const [maxPrice, setMaxPrice] = useState("");
 	const [featured, setFeatured] = useState(false);
 	const [page, setPage] = useState(1);
+	const wishlistItems = useWishlistStore((state) => state.items);
+	const toggleWishlist = useWishlistStore((state) => state.toggle);
+
 	const [pagination, setPagination] = useState({
 		currentPage: 1,
 		totalPages: 1,
@@ -122,7 +126,6 @@ const Products = ({ categorySlug = "" }) => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 	const [showFilters, setShowFilters] = useState(false);
-	const [wishlist, setWishlist] = useState([]);
 	const [retryKey, setRetryKey] = useState(0);
 	const PRICE_MIN = 500;
 	const PRICE_MAX = 10000;
@@ -360,14 +363,6 @@ const Products = ({ categorySlug = "" }) => {
 	minPrice ||
 	maxPrice ||
 	featured;
-
-	const toggleWishlist = (productId) => {
-		setWishlist((current) =>
-			current.includes(productId)
-				? current.filter((id) => id !== productId)
-				: [...current, productId],
-		);
-	};
 
 	const chooseCategory = (categoryOrSlug) => {
 		if (!categoryOrSlug) {
@@ -730,7 +725,7 @@ setFeatured(false);
 							<>
 								<div className={tw("vanta-collection-grid")}>
 									{products.map((product) => {
-										const isWishlisted = wishlist.includes(product._id);
+										const isWishlisted = wishlistItems.some((item) => item._id === product._id);
 										const rating = Number(
 											product.rating?.average || product.averageRating || 0,
 										);
@@ -801,7 +796,7 @@ setFeatured(false);
 															? "Remove from wishlist"
 															: "Add to wishlist"
 													}
-													onClick={() => toggleWishlist(product._id)}
+													onClick={() => toggleWishlist(product)}
 												>
 													<Heart
 														size={15}
