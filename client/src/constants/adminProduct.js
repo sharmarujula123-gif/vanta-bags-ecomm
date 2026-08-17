@@ -1,0 +1,15 @@
+export const emptyProductForm = {
+  name: "",
+  description: "",
+  price: "",
+  compareAtPrice: "",
+  category: "",
+  imageFiles: [],
+  existingImages: [],
+  stock: 0,
+  sku: "",
+  brand: "Vanta",
+  material: "",
+  color: "",
+  isFeatured: false,
+};
