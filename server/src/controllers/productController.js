@@ -2,6 +2,7 @@ import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import slugify from "slugify";
 import mongoose from "mongoose";
+import { uploadImageBuffer } from "../config/cloudinary.js";
 
 export const createProduct = async (req, res) => {
   const {
@@ -10,7 +11,6 @@ export const createProduct = async (req, res) => {
     price,
     compareAtPrice,
     category,
-    images,
     stock,
     sku,
     brand,
@@ -30,6 +30,13 @@ export const createProduct = async (req, res) => {
       success: false,
       message:
         "Name, description, price, category and SKU are required",
+    });
+  }
+
+  if (!req.files?.length) {
+    return res.status(400).json({
+      success: false,
+      message: "At least one product image is required",
     });
   }
 
@@ -58,6 +65,14 @@ export const createProduct = async (req, res) => {
     });
   }
 
+  const uploadedImages = await Promise.all(
+    req.files.map((file) =>
+      uploadImageBuffer(file.buffer, file.originalname)
+    )
+  );
+
+  const images = uploadedImages.map((image) => image.secure_url);
+
   const product = await Product.create({
     name,
     slug,
@@ -71,7 +86,7 @@ export const createProduct = async (req, res) => {
     brand,
     material,
     color,
-    isFeatured,
+    isFeatured: isFeatured === true || isFeatured === "true",
   });
 
   const populatedProduct = await Product.findById(product._id).populate(
@@ -263,74 +278,115 @@ export const getProductBySlug = async (req, res) => {
   });
 };
 export const updateProduct = async (req, res) => {
-    const { id } = req.params;
-  
-    const allowedFields = [
-      "name",
-      "description",
-      "price",
-      "compareAtPrice",
-      "category",
-      "images",
-      "stock",
-      "brand",
-      "material",
-      "color",
-      "isFeatured",
-    ];
-  
-    const updates = {};
-  
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
-      }
+  const { id } = req.params;
+
+  const allowedFields = [
+    "name",
+    "description",
+    "price",
+    "compareAtPrice",
+    "category",
+    "stock",
+    "brand",
+    "material",
+    "color",
+    "isFeatured",
+  ];
+
+  const updates = {};
+
+  for (const field of allowedFields) {
+    if (req.body[field] !== undefined) {
+      updates[field] = req.body[field];
     }
-  
-    if (updates.category) {
-      const categoryExists = await Category.findById(updates.category);
-  
-      if (!categoryExists) {
-        return res.status(404).json({
-          success: false,
-          message: "Category not found",
-        });
-      }
-    }
-  
-    if (updates.name) {
-      updates.slug = slugify(updates.name, {
-        lower: true,
-        strict: true,
-      });
-    }
-  
-    const product = await Product.findByIdAndUpdate(
-      id,
-      updates,
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).populate("category", "name slug");
-  
-    if (!product) {
+  }
+
+  if (updates.category) {
+    const categoryExists = await Category.findById(updates.category);
+
+    if (!categoryExists) {
       return res.status(404).json({
         success: false,
-        message: "Product not found",
+        message: "Category not found",
       });
     }
-  
-    return res.status(200).json({
-      success: true,
-      message: "Product updated successfully",
-      data: {
-        product,
-      },
-    });
-  };
+  }
 
-  export const deactivateProduct = async (req, res) => {
+  if (updates.name) {
+    updates.slug = slugify(updates.name, {
+      lower: true,
+      strict: true,
+    });
+  }
+
+  const productBeforeUpdate = await Product.findById(id);
+
+  if (!productBeforeUpdate) {
+    return res.status(404).json({
+      success: false,
+      message: "Product not found",
+    });
+  }
+
+  let existingImages = productBeforeUpdate.images || [];
+
+  if (req.body.existingImages !== undefined) {
+    try {
+      existingImages = JSON.parse(req.body.existingImages);
+    } catch {
+      existingImages = [];
+    }
+
+    if (!Array.isArray(existingImages)) {
+      existingImages = [];
+    }
+  }
+
+  if (req.files?.length) {
+    const uploadedImages = await Promise.all(
+      req.files.map((file) =>
+        uploadImageBuffer(file.buffer, file.originalname)
+      )
+    );
+
+    existingImages = [
+      ...existingImages,
+      ...uploadedImages.map((image) => image.secure_url),
+    ];
+  }
+
+  if (!existingImages.length) {
+    return res.status(400).json({
+      success: false,
+      message: "At least one product image is required",
+    });
+  }
+
+  updates.images = existingImages;
+  if (updates.isFeatured !== undefined) {
+    updates.isFeatured =
+      updates.isFeatured === true || updates.isFeatured === "true";
+  }
+
+  const product = await Product.findByIdAndUpdate(
+    id,
+    updates,
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).populate("category", "name slug");
+
+  return res.status(200).json({
+    success: true,
+    message: "Product updated successfully",
+    data: {
+      product,
+    },
+  });
+};
+
+export const deactivateProduct = async (req, res) => {
     const { id } = req.params;
   
     const product = await Product.findByIdAndUpdate(

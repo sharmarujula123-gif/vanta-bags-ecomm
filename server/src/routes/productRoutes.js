@@ -11,6 +11,7 @@ import {
 
 import authenticateUser from "../middleware/authenticateUser.js";
 import requireAdmin from "../middleware/requireAdmin.js";
+import upload from "../middleware/uploadImages.js";
 
 const router = express.Router();
 
@@ -23,12 +24,14 @@ router.post(
   "/",
   authenticateUser,
   requireAdmin,
+  upload.array("images", 10),
   createProduct
 );
 router.put(
     "/:id",
     authenticateUser,
     requireAdmin,
+    upload.array("images", 10),
     updateProduct
   );
   
