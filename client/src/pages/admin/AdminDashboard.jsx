@@ -13,16 +13,8 @@ import toast from "react-hot-toast";
 import orderService from "../../services/orderService";
 import productService from "../../services/productService";
 import useAuthStore from "../../store/authStore";
-
-const formatCurrency = (value) =>
-  `₹${Number(value || 0).toLocaleString("en-IN")}`;
-
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+import AdminHeader from "../../components/admin/AdminHeader";
+import { formatCurrency, formatDate } from "../../utils/admin";
 
 const AdminDashboard = () => {
   const isAuthenticated = useAuthStore(
@@ -137,41 +129,25 @@ const AdminDashboard = () => {
     <main className="min-h-[70vh] bg-stone-50 px-5 py-12">
       <div className="mx-auto max-w-7xl">
 
-        {/* Header */}
-
-        <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-          <div>
-            <p className="text-xs font-bold tracking-[0.25em] text-stone-500">
-              VANTA ADMIN
-            </p>
-
-            <h1 className="mt-3 font-serif text-5xl">
-              Dashboard
-            </h1>
-
-            <p className="mt-3 text-sm text-stone-500">
-              Welcome back, {user?.name || "Admin"}.
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Link
-              to="/admin/orders"
-              className="inline-flex items-center gap-2 border border-stone-300 bg-white px-5 py-3 text-sm font-semibold hover:bg-stone-100"
-            >
-              Orders
-              <ArrowRight size={16} />
-            </Link>
-
-            <Link
-              to="/admin/products"
-              className="inline-flex items-center gap-2 bg-stone-950 px-5 py-3 text-sm font-semibold text-white hover:bg-stone-800"
-            >
-              Products
-              <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
+        <AdminHeader
+          title="Dashboard"
+          description={`Welcome back, ${user?.name || "Admin"}.`}
+        >
+          <Link
+            to="/admin/orders"
+            className="inline-flex items-center gap-2 border border-stone-300 bg-white px-5 py-3 text-sm font-semibold hover:bg-stone-100"
+          >
+            Orders
+            <ArrowRight size={16} />
+          </Link>
+          <Link
+            to="/admin/products"
+            className="inline-flex items-center gap-2 bg-stone-950 px-5 py-3 text-sm font-semibold text-white hover:bg-stone-800"
+          >
+            Products
+            <ArrowRight size={16} />
+          </Link>
+        </AdminHeader>
 
         {/* Loading */}
 

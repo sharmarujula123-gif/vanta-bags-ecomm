@@ -10,40 +10,12 @@ import toast from "react-hot-toast";
 
 import orderService from "../../services/orderService";
 
-const allowedTransitions = {
-    pending: ["confirmed", "cancelled"],
-    confirmed: ["processing", "cancelled"],
-    processing: ["shipped", "cancelled"],
-    shipped: ["delivered"],
-    delivered: [],
-    cancelled: [],
-  };
-
-const statusStyles = {
-  pending: "border-amber-200 bg-amber-50 text-amber-700",
-  confirmed: "border-blue-200 bg-blue-50 text-blue-700",
-  processing: "border-purple-200 bg-purple-50 text-purple-700",
-  shipped: "border-indigo-200 bg-indigo-50 text-indigo-700",
-  delivered: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  cancelled: "border-red-200 bg-red-50 text-red-700",
-};
-
-const paymentStyles = {
-  pending: "border-amber-200 bg-amber-50 text-amber-700",
-  paid: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  failed: "border-red-200 bg-red-50 text-red-700",
-  refunded: "border-purple-200 bg-purple-50 text-purple-700",
-};
-
-const formatCurrency = (value) =>
-  `₹${Number(value || 0).toLocaleString("en-IN")}`;
-
-const formatDate = (date) =>
-  new Date(date).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+import {
+  ORDER_STATUS_TRANSITIONS,
+  ORDER_STATUS_STYLES,
+  PAYMENT_STATUS_STYLES,
+} from "../../utils/orderStatus";
+import { formatCurrency, formatDate } from "../../utils/admin";
 
 const AdminOrderDetails = () => {
   const { id } = useParams();
@@ -162,7 +134,7 @@ const AdminOrderDetails = () => {
     order.orderStatus !== "cancelled";
 
     const availableStatuses =
-  allowedTransitions[order.orderStatus] || [];
+  ORDER_STATUS_TRANSITIONS[order.orderStatus] || [];
   return (
     <main className="min-h-[70vh] bg-stone-50 px-5 py-12">
       <div className="mx-auto max-w-6xl">
@@ -190,14 +162,14 @@ const AdminOrderDetails = () => {
             </h1>
 
             <p className="mt-3 text-sm text-stone-500">
-              Placed on {formatDate(order.createdAt)}
+              Placed on {formatDate(order.createdAt, "long")}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <span
               className={`border px-3 py-2 text-[10px] font-bold uppercase ${
-                statusStyles[order.orderStatus] || ""
+                ORDER_STATUS_STYLES[order.orderStatus] || ""
               }`}
             >
               {order.orderStatus}
@@ -205,7 +177,7 @@ const AdminOrderDetails = () => {
 
             <span
               className={`border px-3 py-2 text-[10px] font-bold uppercase ${
-                paymentStyles[
+                PAYMENT_STATUS_STYLES[
                   order.paymentStatus
                 ] || ""
               }`}

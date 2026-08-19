@@ -1,131 +1,26 @@
 import { tw } from "../utils/twStyles.js";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Heart,
-  SlidersHorizontal,
-  X,
-  Truck,
-  ShieldCheck,
-  RefreshCw,
-  Headphones,
-} from "lucide-react";
+import { useSearchParams } from "react-router-dom";   
 
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
 import useWishlistStore from "../store/wishlistStore";
 import heroImage from "../assets/category/hero.jpg";
-
-const CATEGORY_HEROES = {
-  backpacks: {
-    title: "Backpacks",
-    subtitle: "Functional. Durable. Made for your journey.",
-    image:
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1800&q=85",
-  },
-  "laptop-bags": {
-    title: "Laptop Bags",
-    subtitle: "Polished protection for work and everyday carry.",
-    image:
-      "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?auto=format&fit=crop&w=1800&q=85",
-  },
-  "duffle-bags": {
-    title: "Duffle Bags",
-    subtitle: "Built for weekends, workouts and longer escapes.",
-    image:
-      "https://images.unsplash.com/photo-1556306535-38febf6782e7?auto=format&fit=crop&w=1800&q=85",
-  },
-  handbags: {
-    title: "Handbags",
-    subtitle: "Refined silhouettes for everyday elegance.",
-    image:
-      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=1800&q=85",
-  },
-  "travel-bags": {
-    title: "Travel Bags",
-    subtitle: "Smart organization for the road ahead.",
-    image:
-      "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=1800&q=85",
-  },
-};
-
-const formatPrice = (value) =>
-  `₹${Number(value || 0).toLocaleString("en-IN")}`;
-
-const normalizeCategoryKey = (value = "") =>
-  String(value)
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-
-const unwrapList = (payload, keys = []) => {
-  let value = payload;
-
-  for (let i = 0; i < 4; i += 1) {
-    if (Array.isArray(value)) return value;
-    if (!value || typeof value !== "object") return [];
-
-    const nextKey = keys.find((key) => value[key] !== undefined);
-
-    if (!nextKey) return [];
-
-    value = value[nextKey];
-  }
-
-  return Array.isArray(value) ? value : [];
-};
-
-const getCategoryId = (category) =>
-  String(
-    category?._id ||
-      category?.id ||
-      category?.categoryId ||
-      category?.category?._id ||
-      category?.category?.id ||
-      ""
-  );
-
-const getCategoryKey = (category) => {
-  const value =
-    category?.slug ||
-    category?.name ||
-    category?.category?.slug ||
-    category?.category?.name ||
-    getCategoryId(category);
-
-  return value ? normalizeCategoryKey(value) : "";
-};
-
-const getParentId = (category) => {
-  const parent = category?.parentCategory;
-
-  if (!parent) return "";
-
-  return String(parent?._id || parent?.id || parent || "");
-};
-
-const getParentKey = (category) => {
-  const parent = category?.parentCategory;
-
-  return normalizeCategoryKey(parent?.slug || parent?.name || "");
-};
-
-const normalizeImageUrl = (value) => {
-  if (!value || typeof value !== "string") return "";
-
-  const markdownMatch = value.match(/\((https?:\/\/[^)]+)\)/);
-
-  if (markdownMatch) {
-    return markdownMatch[1];
-  }
-
-  return value.trim();
-};
+import {
+  getCategoryId,
+  getCategoryKey,
+  getParentId,
+  getParentKey,
+  normalizeCategoryKey,
+  unwrapList,
+} from "../utils/productHelpers.js";
+import CollectionHero from "../components/products/CollectionHero.jsx";
+import CategoryPills from "../components/products/CategoryPills.jsx";
+import CollectionToolbar from "../components/products/CollectionToolbar.jsx";
+import FilterSidebar from "../components/products/FilterSidebar.jsx";
+import ProductGrid from "../components/products/ProductGrid.jsx";
+import Pagination from "../components/products/Pagination.jsx";
+import CollectionBenefits from "../components/products/CollectionBenefits.jsx";
 
 const Products = ({ categorySlug = "" }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -833,10 +728,6 @@ const Products = ({ categorySlug = "" }) => {
     page,
     retryKey,
   ]);
-
-  const activeCategoryName =
-    activeCategory?.name || "";
-
   /*
    * Hero section.
    */
@@ -850,10 +741,7 @@ const Products = ({ categorySlug = "" }) => {
 
         image:
           activeCategory.image ||
-          CATEGORY_HEROES[
-            selectedCategory
-          ]?.image ||
-          CATEGORY_HEROES.backpacks.image,
+          heroImage,
       }
     : {
         title: "All Collections",
@@ -861,9 +749,6 @@ const Products = ({ categorySlug = "" }) => {
           "Five categories. One VANTA point of view.",
         image: heroImage,
       };
-
-  const categoryScope =
-    parentCategory || activeCategory;
 
   const hasFilters =
     search ||
@@ -927,7 +812,6 @@ const Products = ({ categorySlug = "" }) => {
     });
   };
 
-
   const resetFilters = () => {
     setSearch("");
     setSearchInput("");
@@ -960,269 +844,28 @@ const Products = ({ categorySlug = "" }) => {
           "vanta-collection-shell !w-full !max-w-none"
         )}
       >
-        <section
-          className={tw(
-            "vanta-collection-hero !h-[235px] max-[640px]:!h-[220px]"
-          )}
-        >
-          <img
-            src={hero.image}
-            alt={hero.title}
-          />
+        <CollectionHero hero={hero} parentCategory={parentCategory} />
 
-          <div
-            className={tw(
-              "vanta-collection-hero-overlay"
-            )}
-          />
-
-          <div
-            className={tw(
-              "vanta-collection-hero-copy !w-full !max-w-[1280px] !mx-auto !left-0 !right-0 !px-6 sm:!px-10 lg:!px-14"
-            )}
-          >
-            <div>
-              <div
-                className={tw(
-                  "mb-3 flex items-center gap-2 text-[9px] text-white/70"
-                )}
-              >
-                <Link
-                  to="/"
-                  className={tw(
-                    "hover:text-white"
-                  )}
-                >
-                  Home
-                </Link>
-
-                <span>›</span>
-
-                <Link
-                  to="/category"
-                  className={tw(
-                    "hover:text-white"
-                  )}
-                >
-                  Collections
-                </Link>
-
-                {parentCategory && (
-                  <>
-                    <span>›</span>
-
-                    <Link
-                      to={`/category/${parentCategory.slug}`}
-                      className={tw(
-                        "hover:text-white"
-                      )}
-                    >
-                      {parentCategory.name}
-                    </Link>
-                  </>
-                )}
-
-                <span>›</span>
-
-                <strong className="font-semibold text-white">
-                  {hero.title}
-                </strong>
-              </div>
-
-              <p
-                className={tw(
-                  "vanta-eyebrow"
-                )}
-              >
-                VANTA COLLECTION
-              </p>
-
-              <h1>{hero.title}</h1>
-
-              <p>{hero.subtitle}</p>
-            </div>
-          </div>
-        </section>
-
-        {activeCategory &&
-          siblingCategories.length > 0 && (
-            <div
-              className={tw(
-                "vanta-category-pills"
-              )}
-            >
-              {parentCategory && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    chooseCategory(
-                      parentCategory
-                    )
-                  }
-                  className={tw(
-                    `vanta-category-pill ${
-                      normalizeCategoryKey(
-                        selectedCategory
-                      ) ===
-                      normalizeCategoryKey(
-                        parentCategory.slug ||
-                          parentCategory.name
-                      )
-                        ? "active"
-                        : ""
-                    }`
-                  )}
-                >
-                  All {parentCategory.name}
-                </button>
-              )}
-
-
-              {siblingCategories.map(
-                (category) => {
-                  const key =
-                    getCategoryKey(
-                      category
-                    );
-
-                  const active =
-                    normalizeCategoryKey(
-                      selectedCategory
-                    ) ===
-                    normalizeCategoryKey(
-                      key
-                    );
-
-                  return (
-                    <Link
-                      key={
-                        getCategoryId(
-                          category
-                        ) || key
-                      }
-                      to={`/category/${key}`}
-                      className={tw(
-                        `vanta-category-pill ${
-                          active
-                            ? "active"
-                            : ""
-                        }`
-                      )}
-                    >
-                      {category.name}
-                    </Link>
-                  );
-                }
-              )}
-            </div>
-          )}
+        <CategoryPills
+  activeCategory={activeCategory}
+  siblingCategories={siblingCategories}
+  parentCategory={parentCategory}
+  selectedCategory={selectedCategory}
+  chooseCategory={chooseCategory}
+/>
 
         <div
           className={tw(
             "vanta-collection-shell !max-w-[1240px] !w-[calc(100%-40px)] max-[640px]:!w-[calc(100%-24px)]"
           )}
         >
-          <div
-            className={tw(
-              "vanta-collection-toolbar !min-h-[76px] !grid-cols-[1fr_auto] max-[640px]:!grid-cols-[auto_1fr_auto]"
-            )}
-          >
-            <div
-              className={tw(
-                "flex items-center gap-3"
-              )}
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  setShowFilters(true)
-                }
-                className={tw(
-                  "vanta-filter-toggle"
-                )}
-              >
-                <SlidersHorizontal
-                  size={15}
-                />
-
-                Filters
-
-                {hasFilters && (
-                  <span
-                    className={tw(
-                      "ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--vanta-text)] px-1 text-[8px] text-[var(--vanta-bg)]"
-                    )}
-                  >
-                    •
-                  </span>
-                )}
-              </button>
-
-              {/* <p
-                className={tw(
-                  "text-[11px] text-[var(--vanta-text)]"
-                )}
-              >
-                Showing{" "}
-                {products.length
-                  ? `${
-                      (pagination.currentPage -
-                        1) *
-                        12 +
-                      1
-                    }–${Math.min(
-                      pagination.currentPage *
-                        12,
-                      pagination.totalProducts
-                    )}`
-                  : "0"}{" "}
-                of{" "}
-                {pagination.totalProducts}{" "}
-                products
-              </p> */}
-            </div>
-
-            <div
-              className={tw(
-                "vanta-sort-wrap"
-              )}
-            >
-              <span>Sort by:</span>
-
-              <select
-                value={sort}
-                onChange={(event) => {
-                  setSort(
-                    event.target.value
-                  );
-
-                  setPage(1);
-                }}
-              >
-                <option value="newest">
-                  Featured
-                </option>
-
-                <option value="popular">
-                  Popular
-                </option>
-
-                <option value="price_asc">
-                  Price: Low to High
-                </option>
-
-                <option value="price_desc">
-                  Price: High to Low
-                </option>
-
-                <option value="name_asc">
-                  Name: A-Z
-                </option>
-              </select>
-
-              <ChevronDown size={14} />
-            </div>
-          </div>
+          <CollectionToolbar
+            sort={sort}
+            setSort={setSort}
+            setPage={setPage}
+            hasFilters={hasFilters}
+            setShowFilters={setShowFilters}
+          />
 
           <div
             className={tw(
@@ -1246,895 +889,78 @@ const Products = ({ categorySlug = "" }) => {
               />
             )}
 
-            <aside
-              className={tw(
-                `vanta-collection-sidebar !z-[101] ${
-                  showFilters
-                    ? "is-open"
-                    : ""
-                }`
-              )}
-            >
-              <div
-                className={tw(
-                  "vanta-filter-heading"
-                )}
-              >
-                <div>
-                  <p
-                    className={tw(
-                      "vanta-eyebrow"
-                    )}
-                  >
-                    Refine
-                  </p>
+<FilterSidebar
+  showFilters={showFilters}
+  setShowFilters={setShowFilters}
+  selectedCategory={selectedCategory}
+  parentCategory={parentCategory}
+  categories={categories}
+  siblingCategories={siblingCategories}
+  chooseCategory={chooseCategory}
+  minPrice={minPrice}
+  setMinPrice={setMinPrice}
+  maxPrice={maxPrice}
+  setMaxPrice={setMaxPrice}
+  colorFilter={colorFilter}
+  setColorFilter={setColorFilter}
+  materialFilter={materialFilter}
+  setMaterialFilter={setMaterialFilter}
+  featured={featured}
+  setFeatured={setFeatured}
+  hasFilters={hasFilters}
+  resetFilters={resetFilters}
+  PRICE_MIN={PRICE_MIN}
+  PRICE_MAX={PRICE_MAX}
+  PRICE_STEP={PRICE_STEP}
+/>
 
-                  <h3>Filters</h3>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowFilters(false)
-                  }
-                  aria-label="Close filters"
-                >
-                  <X size={17} />
-                </button>
-              </div>
-
-              <div
-                className={tw(
-                  "vanta-filter-block"
-                )}
-              >
-                <div
-                  className={tw(
-                    "vanta-filter-title"
-                  )}
-                >
-                  <span>Category</span>
-                  <ChevronDown size={13} />
-                </div>
-
-                <label
-                  className={tw(
-                    "vanta-check-row"
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="category"
-                    checked={
-                      !selectedCategory ||
-                      (!!parentCategory &&
-                        normalizeCategoryKey(
-                          selectedCategory
-                        ) ===
-                          normalizeCategoryKey(
-                            parentCategory.slug ||
-                              parentCategory.name
-                          ))
-                    }
-                    onChange={() =>
-                      chooseCategory(
-                        parentCategory ||
-                          activeCategory ||
-                          ""
-                      )
-                    }
-                  />
-
-                  <span>
-                    All{" "}
-                    {categoryScope?.name ||
-                      "Collections"}
-                  </span>
-                </label>
-
-                {siblingCategories.map(
-                  (category) => {
-                    const key =
-                      getCategoryKey(
-                        category
-                      );
-
-                    return (
-                      <label
-                        className={tw(
-                          "vanta-check-row"
-                        )}
-                        key={
-                          getCategoryId(
-                            category
-                          ) || key
-                        }
-                      >
-                        <input
-                          type="radio"
-                          name="category"
-                          checked={
-                            normalizeCategoryKey(
-                              selectedCategory
-                            ) ===
-                            normalizeCategoryKey(
-                              key
-                            )
-                          }
-                          onChange={() =>
-                            chooseCategory(
-                              category
-                            )
-                          }
-                        />
-
-                        <span>
-                          {category.name}
-                        </span>
-                      </label>
-                    );
-                  }
-                )}
-              </div>
-
-              <div
-                className={tw(
-                  "vanta-filter-block"
-                )}
-              >
-                <div
-                  className={tw(
-                    "vanta-filter-title"
-                  )}
-                >
-                  <span>
-                    Price Range
-                  </span>
-
-                  <ChevronDown size={13} />
-                </div>
-
-                <div
-                  className={tw(
-                    "vanta-price-labels"
-                  )}
-                >
-                  <span>
-                    ₹
-                    {Number(
-                      minPrice ||
-                        PRICE_MIN
-                    ).toLocaleString(
-                      "en-IN"
-                    )}
-                  </span>
-
-                  <span>
-                    ₹
-                    {Number(
-                      maxPrice ||
-                        PRICE_MAX
-                    ).toLocaleString(
-                      "en-IN"
-                    )}
-                  </span>
-                </div>
-
-                <div className="relative mt-2 h-7">
-                  <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 bg-[var(--vanta-border)]" />
-
-                  <div
-                    className="absolute top-1/2 h-[3px] -translate-y-1/2 bg-[var(--vanta-text)]"
-                    style={{
-                      left: `${
-                        ((Number(
-                          minPrice ||
-                            PRICE_MIN
-                        ) -
-                          PRICE_MIN) /
-                          (PRICE_MAX -
-                            PRICE_MIN)) *
-                        100
-                      }%`,
-
-                      right: `${
-                        100 -
-                        ((Number(
-                          maxPrice ||
-                            PRICE_MAX
-                        ) -
-                          PRICE_MIN) /
-                          (PRICE_MAX -
-                            PRICE_MIN)) *
-                          100
-                      }%`,
-                    }}
-                  />
-
-                  <input
-                    type="range"
-                    min={PRICE_MIN}
-                    max={PRICE_MAX}
-                    step={PRICE_STEP}
-                    value={Number(
-                      minPrice ||
-                        PRICE_MIN
-                    )}
-                    onChange={(event) => {
-                      const value =
-                        Number(
-                          event.target
-                            .value
-                        );
-
-                      if (
-                        value <=
-                        Number(
-                          maxPrice ||
-                            PRICE_MAX
-                        )
-                      ) {
-                        setMinPrice(value);
-                      }
-                    }}
-                    className={tw(
-                      "vanta-range-input"
-                    )}
-                    aria-label="Minimum price"
-                  />
-
-                  <input
-                    type="range"
-                    min={PRICE_MIN}
-                    max={PRICE_MAX}
-                    step={PRICE_STEP}
-                    value={Number(
-                      maxPrice ||
-                        PRICE_MAX
-                    )}
-                    onChange={(event) => {
-                      const value =
-                        Number(
-                          event.target
-                            .value
-                        );
-
-                      if (
-                        value >=
-                        Number(
-                          minPrice ||
-                            PRICE_MIN
-                        )
-                      ) {
-                        setMaxPrice(value);
-                      }
-                    }}
-                    className={tw(
-                      "vanta-range-input max"
-                    )}
-                    aria-label="Maximum price"
-                  />
-                </div>
-              </div>
-
-              <div
-                className={tw(
-                  "vanta-filter-block"
-                )}
-              >
-                <div
-                  className={tw(
-                    "vanta-filter-title"
-                  )}
-                >
-                  <span>Color</span>
-                  <ChevronDown size={13} />
-                </div>
-
-                <div
-                  className={tw(
-                    "vanta-color-swatches"
-                  )}
-                >
-                  {[
-                    ["Black", "#111111"],
-                    ["Brown", "#6a4529"],
-                    ["Tan", "#bd8d55"],
-                    ["Cream", "#e5dccd"],
-                    ["Grey", "#b9b8b4"],
-                    ["Green", "#17694e"],
-                    ["Pink", "#d9919b"],
-                  ].map(
-                    ([label, value]) => (
-                      <button
-                        type="button"
-                        key={label}
-                        title={label}
-                        aria-label={`Filter ${label}`}
-                        onClick={() =>
-                          setColorFilter(
-                            (current) =>
-                              current ===
-                              label
-                                ? ""
-                                : label
-                          )
-                        }
-                        className={tw(
-                          `vanta-color-dot ${
-                            colorFilter ===
-                            label
-                              ? "active"
-                              : ""
-                          }`
-                        )}
-                        style={{
-                          background:
-                            value,
-                        }}
-                      />
-                    )
-                  )}
-                </div>
-              </div>
-
-              <div
-                className={tw(
-                  "vanta-filter-block"
-                )}
-              >
-                <div
-                  className={tw(
-                    "vanta-filter-title"
-                  )}
-                >
-                  <span>Material</span>
-                  <ChevronDown size={13} />
-                </div>
-
-                {[
-                  "Leather",
-                  "Vegan Leather",
-                  "Canvas",
-                  "Suede",
-                ].map((material) => (
-                  <label
-                    className={tw(
-                      "vanta-check-row"
-                    )}
-                    key={material}
-                  >
-                    <input
-                      type="radio"
-                      name="material"
-                      checked={
-                        materialFilter ===
-                        material
-                      }
-                      onChange={() =>
-                        setMaterialFilter(
-                          (current) =>
-                            current ===
-                            material
-                              ? ""
-                              : material
-                        )
-                      }
-                    />
-
-                    <span>
-                      {material}
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              <div
-                className={tw(
-                  "vanta-filter-block"
-                )}
-              >
-                <label
-                  className={tw(
-                    "vanta-check-row"
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={featured}
-                    onChange={() =>
-                      setFeatured(
-                        (current) =>
-                          !current
-                      )
-                    }
-                  />
-
-                  <span>
-                    Featured pieces
-                  </span>
-                </label>
-              </div>
-
-              <button
-                type="button"
-                className={tw(
-                  "vanta-filter-apply"
-                )}
-                onClick={() =>
-                  setShowFilters(false)
-                }
-              >
-                Apply filters
-              </button>
-
-              {hasFilters && (
-                <button
-                  type="button"
-                  className={tw(
-                    "vanta-filter-clear"
-                  )}
-                  onClick={resetFilters}
-                >
-                  Clear all
-                </button>
-              )}
-            </aside>
-
-            <section
-              className={tw(
-                "vanta-collection-results"
-              )}
-            >
+            <section className={tw("vanta-collection-results")}>
               {loading && (
-                <div
-                  className={tw(
-                    "vanta-collection-grid"
-                  )}
-                >
-                  {Array.from({
-                    length: 8,
-                  }).map(
-                    (_, index) => (
-                      <div
-                        className={tw(
-                          "vanta-collection-product skeleton"
-                        )}
-                        key={index}
-                      >
-                        <div
-                          className={tw(
-                            "vanta-collection-product-image"
-                          )}
-                        />
-
-                        <div className="skeleton-line wide" />
-
-                        <div className="skeleton-line short" />
-                      </div>
-                    )
-                  )}
+                <div className={tw("vanta-collection-grid")}>
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <div className={tw("vanta-collection-product skeleton")} key={index}>
+                      <div className={tw("vanta-collection-product-image")} />
+                      <div className="skeleton-line wide" />
+                      <div className="skeleton-line short" />
+                    </div>
+                  ))}
                 </div>
               )}
 
               {!loading && error && (
-                <div
-                  className={tw(
-                    "vanta-collection-empty"
-                  )}
-                >
-                  <h2>
-                    Something went wrong
-                  </h2>
-
+                <div className={tw("vanta-collection-empty")}>
+                  <h2>Something went wrong</h2>
                   <p>{error}</p>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setRetryKey(
-                        (current) =>
-                          current + 1
-                      )
-                    }
-                  >
+                  <button type="button" onClick={() => setRetryKey((current) => current + 1)}>
                     Try again
                   </button>
                 </div>
               )}
 
-              {!loading &&
-                !error &&
-                products.length === 0 && (
-                  <div
-                    className={tw(
-                      "vanta-collection-empty"
-                    )}
-                  >
-                    <h2>
-                      No products found
-                    </h2>
+              {!loading && !error && products.length === 0 && (
+                <div className={tw("vanta-collection-empty")}>
+                  <h2>No products found</h2>
+                  <p>Try changing your search or collection filters.</p>
+                  <button type="button" onClick={resetFilters}>Clear filters</button>
+                </div>
+              )}
 
-                    <p>
-                      Try changing your
-                      search or collection
-                      filters.
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={
-                        resetFilters
-                      }
-                    >
-                      Clear filters
-                    </button>
-                  </div>
-                )}
-
-              {!loading &&
-                !error &&
-                products.length > 0 && (
-                  <>
-                    <div
-                      className={tw(
-                        "vanta-collection-grid"
-                      )}
-                    >
-                      {products.map(
-                        (product) => {
-                          const isWishlisted =
-                            wishlistItems.some(
-                              (item) =>
-                                item._id ===
-                                product._id
-                            );
-
-                          const rating =
-                            Number(
-                              product
-                                .rating
-                                ?.average ||
-                                product.averageRating ||
-                                0
-                            );
-
-                          const color =
-                            String(
-                              product.color ||
-                                ""
-                            ).toLowerCase();
-
-                          return (
-                            <article
-                              className={tw(
-                                "vanta-collection-product"
-                              )}
-                              key={
-                                product._id
-                              }
-                            >
-                              <Link
-                                to={`/products/${product.slug}`}
-                                className={tw(
-                                  "vanta-collection-product-link"
-                                )}
-                              >
-                                <div
-                                  className={tw(
-                                    "vanta-collection-product-image"
-                                  )}
-                                >
-                                  {normalizeImageUrl(
-                                    product
-                                      .images?.[0]
-                                  ) ? (
-                                    <img
-                                      src={normalizeImageUrl(
-                                        product
-                                          .images?.[0]
-                                      )}
-                                      alt={
-                                        product.name
-                                      }
-                                    />
-                                  ) : (
-                                    <div
-                                      className={tw(
-                                        "vanta-image-placeholder"
-                                      )}
-                                    >
-                                      VANTA
-                                    </div>
-                                  )}
-
-                                  {product.isFeatured &&
-                                    product.stock >
-                                      0 && (
-                                      <span
-                                        className={tw(
-                                          "vanta-collection-badge"
-                                        )}
-                                      >
-                                        NEW
-                                      </span>
-                                    )}
-
-                                  {product.stock ===
-                                    0 && (
-                                    <span
-                                      className={tw(
-                                        "vanta-collection-badge sold"
-                                      )}
-                                    >
-                                      Sold out
-                                    </span>
-                                  )}
-
-                                  <button
-                                    type="button"
-                                    className={tw(
-                                      `vanta-product-heart ${
-                                        isWishlisted
-                                          ? "active"
-                                          : ""
-                                      }`
-                                    )}
-                                    aria-label={
-                                      isWishlisted
-                                        ? "Remove from wishlist"
-                                        : "Add to wishlist"
-                                    }
-                                    onClick={(
-                                      event
-                                    ) => {
-                                      event.preventDefault();
-
-                                      toggleWishlist(
-                                        product
-                                      );
-                                    }}
-                                  >
-                                    <Heart
-                                      size={15}
-                                      fill={
-                                        isWishlisted
-                                          ? "currentColor"
-                                          : "none"
-                                      }
-                                    />
-                                  </button>
-                                </div>
-
-                                <div
-                                  className={tw(
-                                    "vanta-collection-product-meta"
-                                  )}
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <h3>
-                                      {
-                                        product.name
-                                      }
-                                    </h3>
-
-                                    {product.compareAtPrice >
-                                      product.price && (
-                                      <span
-                                        className={tw(
-                                          "vanta-discount-badge"
-                                        )}
-                                      >
-                                        -
-                                        {Math.round(
-                                          (1 -
-                                            product.price /
-                                              product.compareAtPrice) *
-                                            100
-                                        )}
-                                        %
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <div className="mt-1 flex items-center gap-2">
-                                    <p>
-                                      {formatPrice(
-                                        product.price
-                                      )}
-                                    </p>
-
-                                    {product.compareAtPrice >
-                                      product.price && (
-                                      <span
-                                        className={tw(
-                                          "vanta-old-price inline"
-                                        )}
-                                      >
-                                        {formatPrice(
-                                          product.compareAtPrice
-                                        )}
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {rating >
-                                    0 && (
-                                    <div
-                                      className={tw(
-                                        "vanta-rating"
-                                      )}
-                                    >
-                                      <span>
-                                        ★★★★★
-                                      </span>
-
-                                      <small>
-                                        {rating.toFixed(
-                                          1
-                                        )}
-                                      </small>
-                                    </div>
-                                  )}
-
-                                  {color && (
-                                    <div
-                                      className={tw(
-                                        "vanta-product-color-label"
-                                      )}
-                                    >
-                                      <span
-                                        className={tw(
-                                          `vanta-mini-color ${normalizeCategoryKey(
-                                            color
-                                          )}`
-                                        )}
-                                      />
-
-                                      {
-                                        product.color
-                                      }
-                                    </div>
-                                  )}
-                                </div>
-                              </Link>
-                            </article>
-                          );
-                        }
-                      )}
-                    </div>
-
-                    {pagination.totalPages >
-                      1 && (
-                      <div
-                        className={tw(
-                          "vanta-collection-pagination"
-                        )}
-                      >
-                        <button
-                          type="button"
-                          disabled={
-                            !pagination.hasPreviousPage
-                          }
-                          onClick={() =>
-                            setPage(
-                              (current) =>
-                                Math.max(
-                                  current - 1,
-                                  1
-                                )
-                            )
-                          }
-                        >
-                          <ChevronLeft
-                            size={16}
-                          />
-                        </button>
-
-                        {Array.from({
-                          length: Math.min(
-                            pagination.totalPages,
-                            5
-                          ),
-                        }).map(
-                          (_, index) => {
-                            const pageNumber =
-                              index + 1;
-
-                            return (
-                              <button
-                                key={
-                                  pageNumber
-                                }
-                                type="button"
-                                className={tw(
-                                  pageNumber ===
-                                    pagination.currentPage
-                                    ? "active"
-                                    : ""
-                                )}
-                                onClick={() =>
-                                  setPage(
-                                    pageNumber
-                                  )
-                                }
-                              >
-                                {pageNumber}
-                              </button>
-                            );
-                          }
-                        )}
-
-                        <button
-                          type="button"
-                          disabled={
-                            !pagination.hasNextPage
-                          }
-                          onClick={() =>
-                            setPage(
-                              (current) =>
-                                current + 1
-                            )
-                          }
-                        >
-                          <ChevronRight
-                            size={16}
-                          />
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
+              {!loading && !error && products.length > 0 && (
+                <>
+                  <ProductGrid
+                    products={products}
+                    wishlistItems={wishlistItems}
+                    toggleWishlist={toggleWishlist}
+                  />
+                  <Pagination pagination={pagination} setPage={setPage} />
+                </>
+              )}
             </section>
           </div>
         </div>
       </div>
 
-      <section
-        className={tw(
-          "vanta-collection-benefits"
-        )}
-      >
-        {[
-          [
-            Truck,
-            "Free Shipping",
-            "On all orders over ₹999",
-          ],
-          [
-            ShieldCheck,
-            "Secure Payment",
-            "100% secure checkout",
-          ],
-          [
-            RefreshCw,
-            "Easy Returns",
-            "30-day return policy",
-          ],
-          [
-            Headphones,
-            "Customer Support",
-            "We're here to help",
-          ],
-        ].map(
-          ([Icon, title, text]) => (
-            <div key={title}>
-              <Icon
-                size={27}
-                strokeWidth={1.5}
-              />
-
-              <div>
-                <strong>
-                  {title}
-                </strong>
-
-                <span>{text}</span>
-              </div>
-            </div>
-          )
-        )}
-      </section>
+      <CollectionBenefits />
     </main>
   );
 };

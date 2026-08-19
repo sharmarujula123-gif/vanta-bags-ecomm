@@ -1,6 +1,6 @@
 import { Box, AlertTriangle, Edit3, Trash2 } from "lucide-react";
 
-export default function AdminProductGrid({
+export default function ProductGrid({
   products,
   openEditForm,
   handleStockUpdate,
