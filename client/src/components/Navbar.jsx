@@ -41,6 +41,7 @@ const Navbar = () => {
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const profileRef = useRef(null);
+  const mobileMenuRef = useRef(null);
 
   const cartCount = useCartStore((state) => state.cartCount);
   const wishlistCount = useWishlistStore((state) => state.items.length);
@@ -113,6 +114,42 @@ const Navbar = () => {
     setCollectionsOpen(false);
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Lock the page scroll while the mobile menu is open.
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
+  // Close the mobile menu when clicking anywhere outside it.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleMobileMenuOutsideClick = (event) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target)
+      ) {
+        closeMobileMenu();
+      }
+    };
+
+    document.addEventListener("mousedown", handleMobileMenuOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleMobileMenuOutsideClick);
+    };
+  }, [mobileMenuOpen]);
 
   return (
     <header className={tw(`vanta-header vanta-reference-header ${isHome ? "vanta-header-home" : ""}`)}>
@@ -416,8 +453,8 @@ const Navbar = () => {
           </button>
         </div>
 
-        {mobileMenuOpen && (
-          <div className={tw("vanta-reference-mobile-menu")}>
+        {/* {mobileMenuOpen && (
+          <div ref={mobileMenuRef} className={tw("vanta-reference-mobile-menu")}>
             <form
               className={tw("vanta-mobile-search")}
               onSubmit={(event) => {
@@ -464,9 +501,223 @@ const Navbar = () => {
               </div>
             ) : (
               <button type="button" onClick={handleLogout}>Logout</button>
+            )} */}
+          {/* </div> */}
+        {/* )} */}
+        {mobileMenuOpen && (
+  <div className={tw("vanta-reference-mobile-menu")}>
+    
+    {/* TOP MENU */}
+    <div className={tw("vanta-mobile-menu-main")}>
+
+      {/* Profile */}
+      <button
+        type="button"
+        className={tw("vanta-mobile-menu-item")}
+        onClick={() => {
+          closeMobileMenu();
+          isAuthenticated ? navigate("/account") : openAuth("login");
+        }}
+      >
+        <span>Profile</span>
+      </button>
+
+      {/* Shop All */}
+      <NavLink
+        to="/products"
+        onClick={closeMobileMenu}
+        className={tw("vanta-mobile-menu-item")}
+      >
+        <span>Shop All</span>
+      </NavLink>
+
+      {/* Collections */}
+      <div className={tw("vanta-mobile-collection")}>
+        <button
+          type="button"
+          className={tw("vanta-mobile-menu-item")}
+          onClick={() => setCollectionsOpen((current) => !current)}
+          aria-expanded={collectionsOpen}
+        >
+          <span>Collections</span>
+
+          <ChevronDown
+            size={15}
+            strokeWidth={1.7}
+            className={tw(
+              `transition-transform duration-200 ${
+                collectionsOpen ? "rotate-180" : ""
+              }`
             )}
+          />
+        </button>
+
+        {collectionsOpen && (
+          <div className={tw("vanta-mobile-collection-dropdown")}>
+            {[
+             
+                { name: "Bags", slug: "bags" },
+                { name: "Footwear", slug: "footwear" },
+                { name: "Jewellery", slug: "jewellery" },
+                { name: "Tops", slug: "tops" },
+                { name: "Dresses", slug: "dresses" },
+              
+            ].map((collection) => (
+              <Link
+                key={collection.slug}
+                to={`/category/${collection.slug}`}
+                onClick={closeMobileMenu}
+                className={tw("vanta-mobile-collection-item")}
+              >
+                {collection.name}
+              </Link>
+            ))}
           </div>
         )}
+      </div>
+
+      {/* Category - NO DROPDOWN */}
+      <NavLink
+        to="/category"
+        onClick={closeMobileMenu}
+        className={tw("vanta-mobile-menu-item")}
+      >
+        <span>Category</span>
+      </NavLink>
+
+    </div>
+
+    {/* LOWER MENU */}
+    <div className={tw("vanta-mobile-menu-secondary")}>
+
+      {/* Cart */}
+      <Link
+        to="/cart"
+        onClick={closeMobileMenu}
+        className={tw("vanta-mobile-menu-item")}
+      >
+        <span>Cart</span>
+        {cartCount > 0 && (
+          <span className={tw("vanta-mobile-count")}>
+            {cartCount > 9 ? "9+" : cartCount}
+          </span>
+        )}
+      </Link>
+
+      {/* Wishlist */}
+      <Link
+        to="/wishlist"
+        onClick={closeMobileMenu}
+        className={tw("vanta-mobile-menu-item")}
+      >
+        <span>Wishlist</span>
+        {wishlistCount > 0 && (
+          <span className={tw("vanta-mobile-count")}>
+            {wishlistCount > 9 ? "9+" : wishlistCount}
+          </span>
+        )}
+      </Link>
+
+      {/* Orders */}
+      <Link
+        to="/account/orders"
+        onClick={closeMobileMenu}
+        className={tw("vanta-mobile-menu-item")}
+      >
+        <span>Orders</span>
+      </Link>
+
+      {/* Address */}
+      <Link
+        to="/account/addresses"
+        onClick={closeMobileMenu}
+        className={tw("vanta-mobile-menu-item")}
+      >
+        <span>Address</span>
+      </Link>
+
+      {/* About */}
+      <Link
+        to="/about"
+        onClick={closeMobileMenu}
+        className={tw("vanta-mobile-menu-item")}
+      >
+        <span>About</span>
+      </Link>
+
+      {/* Contact */}
+      <Link
+        to="/contact"
+        onClick={closeMobileMenu}
+        className={tw("vanta-mobile-menu-item")}
+      >
+        <span>Contact</span>
+      </Link>
+
+    </div>
+
+    {/* THEME */}
+    <div className={tw("vanta-mobile-menu-theme")}>
+      <button
+        type="button"
+        className={tw("vanta-mobile-theme-button")}
+        onClick={() =>
+          setTheme((current) =>
+            current === "dark" ? "light" : "dark"
+          )
+        }
+      >
+        {theme === "dark" ? (
+          <Sun size={15} strokeWidth={1.7} />
+        ) : (
+          <Moon size={15} strokeWidth={1.7} />
+        )}
+
+        <span>
+          {theme === "dark" ? "Light" : "Dark"}
+        </span>
+      </button>
+    </div>
+
+    {/* LOGIN / REGISTER */}
+    {!isAuthenticated ? (
+      <div className={tw("vanta-mobile-menu-auth")}>
+
+        <button
+          type="button"
+          onClick={() => {
+            closeMobileMenu();
+            openAuth("login");
+          }}
+        >
+          Login
+        </button>
+
+        <span>/</span>
+
+        <button
+          type="button"
+          onClick={() => {
+            closeMobileMenu();
+            openAuth("register");
+          }}
+        >
+          Register
+        </button>
+
+      </div>
+    ) : (
+      <button
+        type="button"
+        className={tw("vanta-mobile-logout")}
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
+    )}
+
+  </div>
+)}
       </div>
     </header>
   );
