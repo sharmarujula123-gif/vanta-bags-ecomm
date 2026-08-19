@@ -131,7 +131,7 @@ const Navbar = () => {
     };
   }, [mobileMenuOpen]);
 
-  // Close the mobile menu when clicking anywhere outside it.
+  // Close the mobile menu when clicking anywhere outside the navbar/menu.
   useEffect(() => {
     if (!mobileMenuOpen) return;
 
@@ -152,7 +152,7 @@ const Navbar = () => {
   }, [mobileMenuOpen]);
 
   return (
-    <header className={tw(`vanta-header vanta-reference-header ${isHome ? "vanta-header-home" : ""}`)}>
+    <header ref={mobileMenuRef} className={tw(`vanta-header vanta-reference-header ${isHome ? "vanta-header-home" : ""}`)}>
       <div className={tw("vanta-promo")}>Free shipping on orders above ₹999</div>
 
       <div className={tw("vanta-reference-navbar")}>
@@ -177,7 +177,6 @@ const Navbar = () => {
 
           <Link to="/" className={tw("vanta-mobile-bar-logo")} onClick={() => { closeMobileMenu(); setMobileSearchOpen(false); }}>
             <span>VANTA</span>
-            <small>BAGS</small>
           </Link>
 
           <div className={tw("vanta-mobile-bar-actions")}>
@@ -219,7 +218,6 @@ const Navbar = () => {
         <div className={tw("vanta-reference-navbar-inner")}>
           <Link to="/" className={tw("vanta-reference-logo")} onClick={closeMobileMenu}>
             <span>VANTA</span>
-            <small>BAGS</small>
           </Link>
 
           <nav className={tw("vanta-reference-main-nav")}>
@@ -454,7 +452,7 @@ const Navbar = () => {
         </div>
 
         {/* {mobileMenuOpen && (
-          <div ref={mobileMenuRef} className={tw("vanta-reference-mobile-menu")}>
+          <div className={tw("vanta-reference-mobile-menu")}>
             <form
               className={tw("vanta-mobile-search")}
               onSubmit={(event) => {

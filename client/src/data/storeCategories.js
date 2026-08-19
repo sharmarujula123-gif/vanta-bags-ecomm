@@ -1,3 +1,4 @@
+import bagshero from "../assets/category/bagshero.jpg";
 export const STORE_CATEGORIES = [
   {
     name: "Tops",
@@ -17,7 +18,7 @@ export const STORE_CATEGORIES = [
     name: "Footwear",
     slug: "footwear",
     description: "Sneakers, heels and everyday finishing pieces.",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1000&q=85",
+    image: "bagshero",
     children: ["Sneakers", "Heels", "Flats", "Boots", "Sandals", "Loafers"],
   },
   {
