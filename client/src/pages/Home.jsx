@@ -1,38 +1,33 @@
 import { tw } from "../utils/twStyles.js";
-import { useEffect, useState } from "react";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Box,
-  Check,
-  Droplets,
-  Feather,
-  Heart,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-  UserRound,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Heart, Star, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
 import heroImage from "../assets/category/hero.jpg";
-
-
-const categoryImages = {
-  backpacks:
-    "https://res.cloudinary.com/q9toon94/image/upload/v1786813548/vanta-bags/products/backpack1.jpg",
-  "duffle-bags":
-    "https://res.cloudinary.com/q9toon94/image/upload/v1786810385/vanta-bags/products/dufflebag-2.jpg",
-  handbags:
-    "https://res.cloudinary.com/q9toon94/image/upload/v1786812733/vanta-bags/products/handbag-4.jpg",
-  "laptop-bags":
-    "https://res.cloudinary.com/q9toon94/image/upload/v1786812857/vanta-bags/products/laptopbag-2.jpg",
-  "travel-bags":
-    "https://res.cloudinary.com/q9toon94/image/upload/v1786812611/vanta-bags/products/travelbag.jpg",
-};
+import {
+  categoryImage,
+  fallbackRootCategories,
+  getRootCategories,
+  normalizeCategory,
+} from "../data/storeCategories";
 
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
+const reviews = [
+  {
+    name: "Priya Sharma",
+    text: "The quality is amazing. Exactly what I was looking for, and the finish feels genuinely premium.",
+  },
+  {
+    name: "Ananya Verma",
+    text: "Stylish, comfortable and worth every penny. The details are beautiful in person.",
+  },
+  {
+    name: "Ritika Singh",
+    text: "Fast delivery and excellent customer service. I will definitely be shopping here again.",
+  },
+];
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -50,6 +45,7 @@ export default function Home() {
             []
         );
       }
+
       if (categoryResult.status === "fulfilled") {
         setCategories(
           categoryResult.value.data?.categories ||
@@ -60,373 +56,311 @@ export default function Home() {
     });
   }, []);
 
-  const fallbackCategories = [
-    ["Backpacks", "backpacks", "Everyday carry"],
-    ["Duffle Bags", "duffle-bags", "Made for weekends"],
-    ["Handbags", "handbags", "Easy, polished carry"],
-    ["Laptop Bags", "laptop-bags", "Built around your tech"],
-    ["Sling Bags", "sling-bags", "Light and close"],
-  ];
-
-  const categoryItems = categories.length
-    ? categories.slice(0, 5).map((category, index) => [
-        category.name,
-        category.slug,
-        ["Everyday carry", "Made for weekends", "Easy, polished carry", "Built around your tech", "Light and close"][index] ||
-          "Designed for movement",
-      ])
-    : fallbackCategories;
+  const rootCategories = useMemo(() => {
+    const roots = getRootCategories(categories);
+    return roots.length ? roots.slice(0, 5) : fallbackRootCategories;
+  }, [categories]);
 
   return (
-    <main className={tw("vanta-home vanta-reference-home")}>
+    <main className={tw("bg-[var(--vanta-bg)] text-[var(--vanta-text)]")}>
       {/* HERO */}
-      <section className={tw("vanta-reference-hero")}>
-      <img
-  src={heroImage}
-  alt="Vanta black bag"
-  className={tw("vanta-reference-hero-image")}
-/>
-        <div className={tw("vanta-reference-hero-shade")} />
+      <section className={tw("relative min-h-[500px] overflow-hidden sm:min-h-[590px] lg:min-h-[650px]")}>
+        <img
+          src={heroImage}
+          alt="Vanta fashion collection"
+          className={tw("absolute inset-0 h-full w-full object-cover object-center")}
+        />
+        <div
+          className={tw(
+            "absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-black/5"
+          )}
+        />
 
-        <div className={tw("vanta-reference-hero-copy")}>
-          <p>BUILT TO MOVE. DESIGNED TO LAST.</p>
-          <h1>
-            What moves you,
-            <br />
-            <em>matters.</em>
-          </h1>
-          <Link to="/" className={tw("vanta-reference-outline-btn")}>
-            Explore collection <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
-
-      {/* CATEGORY / SHOP THE EDIT */}
-      <section className={tw("vanta-reference-edit")}>
-        <div className={tw("vanta-reference-section-head")}>
-          <div>
-            <p>SHOP THE EDIT</p>
-            <h2>Find your carry.</h2>
-          </div>
-          <Link to="/" className={tw("vanta-reference-view-all")}>
-            View all <ArrowRight size={15} />
-          </Link>
-        </div>
-
-        <div className={tw("vanta-reference-category-row")}>
-          {categoryItems.map(([name, slug, description], index) => (
-            <Link
-              key={slug || name}
-              to={slug ? `/category/${slug}` : "/products"}
-              className={tw("vanta-reference-category")}
+        <div
+          className={tw(
+            "relative mx-auto flex min-h-[500px] max-w-[1280px] items-center px-5 py-20 sm:min-h-[590px] sm:px-8 lg:min-h-[650px] lg:px-10"
+          )}
+        >
+          <div className={tw("max-w-[620px] text-white")}>
+            <p className={tw("mb-4 text-[10px] font-semibold uppercase tracking-[0.32em] text-[#d8b56b] sm:text-xs")}>
+              New Collection
+            </p>
+            <h1
+              className={tw(
+                "font-serif text-[46px] leading-[0.95] tracking-[-0.045em] sm:text-6xl lg:text-[76px]"
+              )}
             >
-              <div className={tw("vanta-reference-category-image")}>
-                <img
-                  src={categoryImages[slug] || heroImage}
-                  alt={name}
-                />
-                <span className={tw("vanta-reference-category-arrow")}>
-                  <ArrowUpRight size={17} />
-                </span>
-              </div>
-              <div className={tw("vanta-reference-category-copy")}>
-                <div>
-                  <small>{String(index + 1).padStart(2, "0")}</small>
-                  <h3>{name}</h3>
-                  <p>{description}</p>
-                </div>
-                <ArrowRight size={14} />
-              </div>
+              Elevate
+              <br />
+              <em className={tw("font-normal")}>your style.</em>
+            </h1>
+            <p
+              className={tw(
+                "mt-5 max-w-[420px] text-sm leading-6 text-white/85 sm:text-base sm:leading-7"
+              )}
+            >
+              Timeless designs. Premium quality.
+              <br className={tw("hidden sm:block")} />
+              Made for every you.
+            </p>
+            <Link
+              to="/category"
+              className={tw(
+                "mt-7 inline-flex items-center gap-3 rounded-md bg-black px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-black/80 sm:px-7"
+              )}
+            >
+              Shop Collection
+              <ArrowRight size={16} />
             </Link>
+          </div>
+        </div>
+
+        <div className={tw("absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2")}>
+          {[0, 1, 2].map((dot) => (
+            <span
+              key={dot}
+              className={tw(
+                "h-1.5 w-1.5 rounded-full border border-white/80",
+                dot === 0 ? "bg-white" : "bg-transparent"
+              )}
+            />
           ))}
         </div>
       </section>
 
-      {/* NEW / NOW */}
-      <section className={tw("vanta-reference-now")}>
-        <div className={tw("vanta-reference-section-head")}>
-          <div>
-            <p>NEW / NOW</p>
-            <h2>Made for the way you move.</h2>
-          </div>
-          <Link to="/" className={tw("vanta-reference-view-all")}>
-            Shop all <ArrowRight size={15} />
-          </Link>
-        </div>
-
-        <div className={tw("vanta-reference-features")}>
-          <div>
-            <span><ShieldCheck size={19} /></span>
-            <div><b>PREMIUM MATERIALS</b><small>Built to last, every time.</small></div>
-          </div>
-          <div>
-            <span><Box size={19} /></span>
-            <div><b>SMART DESIGN</b><small>Thoughtful in every detail.</small></div>
-          </div>
-          <div>
-            <span><Feather size={19} /></span>
-            <div><b>LIGHTWEIGHT</b><small>Move freely, always.</small></div>
-          </div>
-          <div>
-            <span><Droplets size={19} /></span>
-            <div><b>WATER RESISTANT</b><small>Ready for anything.</small></div>
-          </div>
-        </div>
-      </section>
-
-      {/* PRODUCTS */}
-      <section className={tw("vanta-reference-products")}>
-        <div className={tw("vanta-reference-section-head")}>
-          <div>
-            <p>THE LATEST</p>
-            <h2>Pieces worth carrying.</h2>
-          </div>
-          <Link to="/" className={tw("vanta-reference-view-all")}>
-            View collection <ArrowRight size={15} />
-          </Link>
-        </div>
-
-        <div className={tw("vanta-reference-product-grid")}>
-          {products.slice(0, 8).map((product, index) => (
+      {/* CATEGORY */}
+      <section className={tw("px-4 py-10 sm:px-8 sm:py-14 lg:px-10 lg:py-16")}>
+        <div className={tw("mx-auto max-w-[1280px]")}>
+          <div className={tw("mb-7 flex items-end justify-between gap-4 sm:mb-9")}>
+            <div>
+              <p className={tw("text-[9px] font-bold uppercase tracking-[0.3em] text-[var(--vanta-muted)] sm:text-[10px]")}>
+                Shop by Category
+              </p>
+              <h2 className={tw("mt-2 font-serif text-3xl tracking-[-0.04em] sm:text-4xl lg:text-5xl")}>
+                Find your next favorite.
+              </h2>
+            </div>
             <Link
-              key={product._id}
-              to={`/products/${product.slug}`}
-              className={tw("vanta-reference-product")}
+              to="/category"
+              className={tw("hidden shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] sm:flex")}
             >
-              <div className={tw("vanta-reference-product-image")}>
-                {product.images?.[0] ? (
-                  <img src={product.images[0]} alt={product.name} />
-                ) : (
-                  <span>VANTA</span>
-                )}
-                <span className={tw("vanta-reference-product-number")}>
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Wishlist"
-                  onClick={(e) => e.preventDefault()}
+              View All <ArrowRight size={15} />
+            </Link>
+          </div>
+
+          <div
+            className={tw(
+              "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5"
+            )}
+          >
+            {rootCategories.map((category, index) => {
+              const slug = category.slug || normalizeCategory(category.name);
+              const image = category.image || categoryImage(category);
+
+              return (
+                <Link
+                  key={category._id || slug}
+                  to={`/category/${slug}`}
+                  className={tw(
+                    "group overflow-hidden rounded-md border border-[var(--vanta-border)] bg-[var(--vanta-surface)]"
+                  )}
                 >
-                  <Heart size={16} />
-                </button>
-              </div>
-              <div className={tw("vanta-reference-product-meta")}>
-                <h3>{product.name}</h3>
-                <p>{money(product.price)}</p>
-              </div>
-            </Link>
-          ))}
+                  <div className={tw("relative aspect-[0.94] overflow-hidden bg-[#f3f1ed]")}>
+                    <img
+                      src={image || heroImage}
+                      alt={category.name}
+                      className={tw(
+                        "h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                      )}
+                    />
+                  </div>
+                  <div className={tw("flex items-center justify-between px-3 py-3 sm:px-4 sm:py-4")}>
+                    <div>
+                      <span className={tw("text-[9px] tracking-[0.2em] text-[var(--vanta-muted)]")}>
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className={tw("mt-1 font-serif text-xl sm:text-2xl")}>
+                        {category.name}
+                      </h3>
+                    </div>
+                    <ArrowRight size={15} />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          <Link
+            to="/category"
+            className={tw("mt-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] sm:hidden")}
+          >
+            View All <ArrowRight size={15} />
+          </Link>
         </div>
       </section>
 
-      <section
-  className={tw(
-    "bg-white px-4 py-16 transition-colors duration-300 dark:bg-[#0a0a0a] sm:px-6 sm:py-20 md:py-24"
-  )}
->
-  <div className={tw("mx-auto max-w-6xl")}>
-
-    {/* Header */}
-    <div className={tw("mb-10 text-center sm:mb-12")}>
-      <p
-        className={tw(
-          "mb-3 text-[10px] uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400 sm:mb-4 sm:text-[11px]"
-        )}
-      >
-        Customer Stories
-      </p>
-
-      <h2
-        className={tw(
-          "text-3xl font-light leading-tight tracking-tight text-gray-900 dark:text-white sm:text-4xl md:text-5xl"
-        )}
-      >
-        Loved by people who
-        <br />
-        <em className={tw("font-serif")}>carry VANTA.</em>
-      </h2>
-
-      <p
-        className={tw(
-          "mx-auto mt-4 max-w-xl text-xs leading-6 text-gray-500 dark:text-gray-400 sm:text-sm sm:leading-7"
-        )}
-      >
-        Thoughtfully designed bags made for everyday movement, work, travel,
-        and everything in between.
-      </p>
-    </div>
-
-    {/* Reviews */}
-    <div className={tw("grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5")}>
-
-      {/* Review 1 */}
-      <div
-        className={tw(
-          "flex min-h-[280px] flex-col justify-between border border-gray-200 bg-white p-6 transition-colors duration-300 dark:border-white/10 dark:bg-[#151515] sm:p-7 md:p-8"
-        )}
-      >
-        <div>
-          <div
-            className={tw(
-              "mb-6 text-sm tracking-wide text-gray-900 dark:text-white"
-            )}
-          >
-            ★★★★★
+      {/* TRENDING */}
+      <section className={tw("border-y border-[var(--vanta-border)] bg-[var(--vanta-surface)] px-4 py-10 sm:px-8 sm:py-14 lg:px-10 lg:py-16")}>
+        <div className={tw("mx-auto max-w-[1280px]")}>
+          <div className={tw("mb-7 flex items-end justify-between gap-4 sm:mb-9")}>
+            <div>
+              <p className={tw("text-[9px] font-bold uppercase tracking-[0.3em] text-[var(--vanta-muted)] sm:text-[10px]")}>
+                Trending Now
+              </p>
+              <h2 className={tw("mt-2 font-serif text-3xl tracking-[-0.04em] sm:text-4xl lg:text-5xl")}>
+                Popular picks.
+              </h2>
+            </div>
+            <Link
+              to="/products"
+              className={tw("inline-flex items-center gap-2 rounded-full border border-[var(--vanta-border)] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] sm:px-5")}
+            >
+              Shop All <ArrowRight size={14} />
+            </Link>
           </div>
 
-          <p
-            className={tw(
-              "text-sm leading-6 text-gray-700 dark:text-gray-300 sm:text-[15px] sm:leading-7"
-            )}
-          >
-            “The quality is much better than I expected. The bag feels
-            premium, looks minimal, and fits everything I need for work.”
-          </p>
-        </div>
-
-        <div
-          className={tw(
-            "mt-8 border-t border-gray-100 pt-5 dark:border-white/10"
-          )}
-        >
-          <p
-            className={tw(
-              "text-sm font-medium text-gray-900 dark:text-white"
-            )}
-          >
-            Arjun Mehta
-          </p>
-
-          <p
-            className={tw(
-              "mt-1 text-xs text-gray-400 dark:text-gray-500"
-            )}
-          >
-            Verified Customer
-          </p>
-        </div>
-      </div>
-
-      {/* Review 2 */}
-      <div
-        className={tw(
-          "flex min-h-[280px] flex-col justify-between border border-gray-200 bg-white p-6 transition-colors duration-300 dark:border-white/10 dark:bg-[#151515] sm:p-7 md:p-8"
-        )}
-      >
-        <div>
           <div
             className={tw(
-              "mb-6 text-sm tracking-wide text-gray-900 dark:text-white"
+              "grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-9 lg:grid-cols-4 xl:grid-cols-4"
             )}
           >
-            ★★★★★
+            {products.slice(0, 8).map((product, index) => (
+              <Link
+                key={product._id}
+                to={`/products/${product.slug}`}
+                className={tw("group min-w-0")}
+              >
+                <div className={tw("relative aspect-[0.82] overflow-hidden rounded-md bg-[#f2f1ee]")}>
+                  {product.images?.[0] ? (
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className={tw("h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]")}
+                    />
+                  ) : (
+                    <span className={tw("flex h-full items-center justify-center font-serif text-2xl")}>
+                      VANTA
+                    </span>
+                  )}
+
+                  <span className={tw("absolute left-3 top-3 text-[9px] font-semibold tracking-[0.16em] text-black/50")}>
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+
+                  <button
+                    type="button"
+                    aria-label="Wishlist"
+                    onClick={(event) => event.preventDefault()}
+                    className={tw(
+                      "absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm transition hover:bg-white"
+                    )}
+                  >
+                    <Heart size={15} />
+                  </button>
+                </div>
+
+                <div className={tw("pt-3")}>
+                  <h3 className={tw("truncate text-xs font-medium sm:text-sm")}>
+                    {product.name}
+                  </h3>
+                  <p className={tw("mt-1 text-xs font-semibold sm:text-sm")}>
+                    {money(product.price)}
+                  </p>
+                  <div className={tw("mt-2 flex items-center justify-between")}>
+                    <div className={tw("flex items-center gap-0.5 text-[#c99824]")}>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} size={10} fill="currentColor" />
+                      ))}
+                      <span className={tw("ml-1 text-[9px] text-[var(--vanta-muted)]")}>
+                        ({product.reviews?.length || product.reviewCount || 0})
+                      </span>
+                    </div>
+                    <span className={tw("flex h-7 w-7 items-center justify-center rounded-full bg-black text-white")}>
+                      <ShoppingBag size={12} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
 
-          <p
-            className={tw(
-              "text-sm leading-6 text-gray-700 dark:text-gray-300 sm:text-[15px] sm:leading-7"
-            )}
-          >
-            “I bought the duffle for a weekend trip and it quickly became my
-            go-to travel bag. Clean design, plenty of space, and very
-            comfortable to carry.”
-          </p>
+          {!products.length && (
+            <div className={tw("py-16 text-center text-sm text-[var(--vanta-muted)]")}>
+              Trending products will appear here.
+            </div>
+          )}
         </div>
+      </section>
 
+      {/* PROMO */}
+      <section className={tw("px-4 py-7 sm:px-8 sm:py-10 lg:px-10")}>
         <div
           className={tw(
-            "mt-8 border-t border-gray-100 pt-5 dark:border-white/10"
+            "relative mx-auto min-h-[230px] max-w-[1280px] overflow-hidden rounded-lg bg-[#101010] px-6 py-10 text-white sm:min-h-[280px] sm:px-10 sm:py-12 lg:px-16"
           )}
         >
-          <p
-            className={tw(
-              "text-sm font-medium text-gray-900 dark:text-white"
-            )}
-          >
-            Riya Kapoor
-          </p>
-
-          <p
-            className={tw(
-              "mt-1 text-xs text-gray-400 dark:text-gray-500"
-            )}
-          >
-            Verified Customer
-          </p>
+          <div className={tw("absolute -right-10 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-[#b78b42]/20 blur-3xl sm:right-20 sm:h-72 sm:w-72")} />
+          <div className={tw("relative max-w-[620px]")}>
+            <p className={tw("text-[10px] font-bold uppercase tracking-[0.28em] text-[#d5ae65]")}>
+              Limited Time Only
+            </p>
+            <h2 className={tw("mt-3 font-serif text-4xl tracking-[-0.04em] sm:text-6xl")}>
+              Up to <span className={tw("text-[#d5ae65]")}>30%</span> off
+            </h2>
+            <p className={tw("mt-2 text-sm text-white/70")}>
+              On selected styles. Don&apos;t miss out.
+            </p>
+            <Link
+              to="/products"
+              className={tw("mt-6 inline-flex items-center gap-3 rounded-md bg-[#d5ae65] px-5 py-3 text-xs font-semibold text-black")}
+            >
+              Shop Offers <ArrowRight size={15} />
+            </Link>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Review 3 */}
-      <div
-        className={tw(
-          "flex min-h-[280px] flex-col justify-between border border-gray-200 bg-white p-6 transition-colors duration-300 dark:border-white/10 dark:bg-[#151515] sm:p-7 md:p-8"
-        )}
-      >
-        <div>
-          <div
-            className={tw(
-              "mb-6 text-sm tracking-wide text-gray-900 dark:text-white"
-            )}
-          >
-            ★★★★★
+      {/* REVIEWS */}
+      <section className={tw("border-t border-[var(--vanta-border)] bg-[var(--vanta-bg)] px-4 py-12 sm:px-8 sm:py-16 lg:px-10 lg:py-20")}>
+        <div className={tw("mx-auto max-w-[1240px]")}>
+          <div className={tw("mb-8 text-center sm:mb-10")}>
+            <p className={tw("text-[9px] font-bold uppercase tracking-[0.3em] text-[var(--vanta-muted)] sm:text-[10px]")}>
+              Customer Love
+            </p>
+            <h2 className={tw("mt-3 font-serif text-3xl tracking-[-0.04em] sm:text-4xl lg:text-5xl")}>
+              What our customers say.
+            </h2>
           </div>
 
-          <p
-            className={tw(
-              "text-sm leading-6 text-gray-700 dark:text-gray-300 sm:text-[15px] sm:leading-7"
-            )}
-          >
-            “Simple, stylish and practical. I love that it doesn't have huge
-            logos everywhere. VANTA has nailed the understated look.”
-          </p>
+          <div className={tw("grid gap-4 md:grid-cols-3")}>
+            {reviews.map((review) => (
+              <article
+                key={review.name}
+                className={tw(
+                  "flex min-h-[205px] flex-col justify-between rounded-md border border-[var(--vanta-border)] bg-[var(--vanta-surface)] p-5 sm:p-7"
+                )}
+              >
+                <div>
+                  <div className={tw("flex gap-1 text-[#c99824]")} aria-label="5 star review">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star key={index} size={13} fill="currentColor" />
+                    ))}
+                  </div>
+                  <p className={tw("mt-5 text-sm leading-6 text-[var(--vanta-text)]")}>
+                    “{review.text}”
+                  </p>
+                </div>
+                <div className={tw("mt-6 border-t border-[var(--vanta-border)] pt-4")}>
+                  <p className={tw("text-sm font-semibold")}>{review.name}</p>
+                  <p className={tw("mt-1 text-[11px] text-[var(--vanta-muted)]")}>
+                    Verified Buyer
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
-
-        <div
-          className={tw(
-            "mt-8 border-t border-gray-100 pt-5 dark:border-white/10"
-          )}
-        >
-          <p
-            className={tw(
-              "text-sm font-medium text-gray-900 dark:text-white"
-            )}
-          >
-            Kabir Sharma
-          </p>
-
-          <p
-            className={tw(
-              "mt-1 text-xs text-gray-400 dark:text-gray-500"
-            )}
-          >
-            Verified Customer
-          </p>
-        </div>
-      </div>
-
-    </div>
-
-    {/* Bottom rating */}
-    <div className={tw("mt-8 text-center sm:mt-10")}>
-      <div
-        className={tw(
-          "text-sm tracking-wide text-gray-900 dark:text-white"
-        )}
-      >
-        ★★★★★
-      </div>
-
-      <p
-        className={tw(
-          "mt-2 text-xs text-gray-400 dark:text-gray-500"
-        )}
-      >
-        Rated 4.9/5 by VANTA customers
-      </p>
-    </div>
-
-  </div>
-</section> 
+      </section>
     </main>
   );
 }

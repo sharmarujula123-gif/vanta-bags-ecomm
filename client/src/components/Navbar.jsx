@@ -19,6 +19,8 @@ import useAuthStore from "../store/authStore";
 import useCartStore from "../store/cartStore";
 import useWishlistStore from "../store/wishlistStore";
 import { useAuthModal } from "../context/AuthModalContext";
+import categoryService from "../services/categoryService";
+import { normalizeCategory } from "../data/storeCategories";
 
 const getInitialTheme = () => {
   if (typeof window === "undefined") return "light";
@@ -33,6 +35,11 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const [navSearch, setNavSearch] = useState("");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const profileRef = useRef(null);
 
   const cartCount = useCartStore((state) => state.cartCount);
@@ -52,6 +59,25 @@ const Navbar = () => {
   useEffect(() => {
     if (isAuthenticated) fetchCart().catch(() => {});
   }, [isAuthenticated, fetchCart]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCategories = async () => {
+      try {
+        const response = await categoryService.getCategories();
+        const list = response?.data?.categories || response?.categories || response?.data || [];
+        if (!cancelled) setCategories(Array.isArray(list) ? list : []);
+      } catch (error) {
+        console.error("Failed to load navbar categories:", error);
+      } finally {
+        if (!cancelled) setCategoriesLoading(false);
+      }
+    };
+
+    loadCategories();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleLogout = async () => {
     setProfileOpen(false);
@@ -83,22 +109,173 @@ const Navbar = () => {
   const isHome = location.pathname === "/";
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
+  useEffect(() => {
+    setCollectionsOpen(false);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
     <header className={tw(`vanta-header vanta-reference-header ${isHome ? "vanta-header-home" : ""}`)}>
       <div className={tw("vanta-promo")}>Free shipping on orders above ₹999</div>
 
       <div className={tw("vanta-reference-navbar")}>
+        <div className={tw("vanta-reference-mobile-bar")}>
+          <button
+            type="button"
+            className={tw("vanta-mobile-bar-icon")}
+            onClick={() => { setMobileMenuOpen((v) => !v); setMobileSearchOpen(false); }}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileMenuOpen ? <X size={21} strokeWidth={1.8} /> : <Menu size={21} strokeWidth={1.8} />}
+          </button>
+
+          <button
+            type="button"
+            className={tw("vanta-mobile-bar-icon") }
+            onClick={() => { setMobileSearchOpen((v) => !v); setMobileMenuOpen(false); }}
+            aria-label="Search"
+          >
+            <Search size={20} strokeWidth={1.7} />
+          </button>
+
+          <Link to="/" className={tw("vanta-mobile-bar-logo")} onClick={() => { closeMobileMenu(); setMobileSearchOpen(false); }}>
+            <span>VANTA</span>
+            <small>BAGS</small>
+          </Link>
+
+          <div className={tw("vanta-mobile-bar-actions")}>
+            <button type="button" className={tw("vanta-mobile-bar-icon")} onClick={() => (isAuthenticated ? navigate("/account") : openAuth("login"))} aria-label="Account">
+              <UserRound size={20} strokeWidth={1.7} />
+            </button>
+            <Link to="/cart" className={tw("vanta-mobile-bar-cart")} aria-label="Cart">
+              <ShoppingBag size={20} strokeWidth={1.7} />
+              {cartCount > 0 && <span>{cartCount > 9 ? "9+" : cartCount}</span>}
+            </Link>
+          </div>
+        </div>
+
+        {mobileSearchOpen && (
+          <form
+            className={tw("vanta-mobile-bar-search")}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const value = navSearch.trim();
+              setMobileSearchOpen(false);
+              navigate(value ? `/products?search=${encodeURIComponent(value)}` : "/products");
+            }}
+          >
+            <Search size={17} strokeWidth={1.7} />
+            <input
+              autoFocus
+              type="search"
+              value={navSearch}
+              onChange={(event) => setNavSearch(event.target.value)}
+              placeholder="Search bags, dresses, jewelry..."
+              aria-label="Search products"
+            />
+            <button type="button" onClick={() => setMobileSearchOpen(false)} aria-label="Close search">
+              <X size={17} strokeWidth={1.7} />
+            </button>
+          </form>
+        )}
+
         <div className={tw("vanta-reference-navbar-inner")}>
           <Link to="/" className={tw("vanta-reference-logo")} onClick={closeMobileMenu}>
-            VANTA
+            <span>VANTA</span>
+            <small>BAGS</small>
           </Link>
 
           <nav className={tw("vanta-reference-main-nav")}>
             <NavLink to="/">Home</NavLink>
-            <NavLink to="/products">Collection</NavLink>
-            <Link to="/about">About</Link>
-            <Link to="/category">Category</Link>
+
+            <div className={tw("vanta-mega-trigger-wrap")}>
+              <button
+                type="button"
+                className={tw(`vanta-mega-trigger ${collectionsOpen ? "is-open" : ""}`)}
+                onClick={() => setCollectionsOpen((current) => !current)}
+                aria-expanded={collectionsOpen}
+              >
+                Collections
+                <ChevronDown size={13} strokeWidth={1.7} />
+              </button>
+
+              {collectionsOpen && (
+                <div className={tw("vanta-mega-menu")}>
+                  <div className={tw("vanta-mega-column vanta-mega-root")}>
+                    <p>Shop by category</p>
+                    {categories.filter((category) => !category.parentCategory).map((category) => (
+                      <Link
+                        key={category.slug}
+                        to={`/category/${category.slug}`}
+                        onClick={() => setCollectionsOpen(false)}
+                        className={tw("vanta-mega-root-link")}
+                      >
+                        <span>{category.name}</span>
+                        <span>›</span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className={tw("vanta-mega-column vanta-mega-popular")}>
+                    <p>Popular categories</p>
+                    <div className={tw("vanta-mega-subgrid")}>
+                      {categories
+                        .filter((category) => category.parentCategory)
+                        .slice(0, 10)
+                        .map((category) => (
+                          <Link
+                            key={category._id || category.slug}
+                            to={`/category/${category.slug || normalizeCategory(category.name)}`}
+                            onClick={() => setCollectionsOpen(false)}
+                          >
+                            <span>{category.name}</span>
+                            <small>
+                              {typeof category.parentCategory === "object"
+                                ? category.parentCategory.name
+                                : "Collection"}
+                            </small>
+                          </Link>
+                        ))}
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/category"
+                    onClick={() => setCollectionsOpen(false)}
+                    className={tw("vanta-mega-feature")}
+                  >
+                    <div>
+                      <span>VANTA EDIT</span>
+                      <h3>Explore every collection.</h3>
+                      <strong>Shop now <span>→</span></strong>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <NavLink to="/about">About</NavLink>
+            <NavLink to="/about">Contact</NavLink>
           </nav>
+
+          <form
+            className={tw("vanta-navbar-search")}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const value = navSearch.trim();
+              navigate(value ? `/products?search=${encodeURIComponent(value)}` : "/products");
+              setNavSearch(value);
+            }}
+          >
+            <input
+              type="search"
+              value={navSearch}
+              onChange={(event) => setNavSearch(event.target.value)}
+              placeholder="Search for bags, dresses, jewelry..."
+              aria-label="Search products"
+            />
+            <button type="submit" aria-label="Search"><Search size={18} strokeWidth={1.7} /></button>
+          </form>
 
           <div className={tw("vanta-reference-actions")}>
             <button
@@ -241,13 +418,36 @@ const Navbar = () => {
 
         {mobileMenuOpen && (
           <div className={tw("vanta-reference-mobile-menu")}>
-            <NavLink to="/products" onClick={closeMobileMenu}>Shop</NavLink>
-            <NavLink to="/products" onClick={closeMobileMenu}>Collection</NavLink>
+            <form
+              className={tw("vanta-mobile-search")}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const value = navSearch.trim();
+                closeMobileMenu();
+                navigate(value ? `/products?search=${encodeURIComponent(value)}` : "/products");
+              }}
+            >
+              <input
+                type="search"
+                value={navSearch}
+                onChange={(event) => setNavSearch(event.target.value)}
+                placeholder="Search products..."
+                aria-label="Search products"
+              />
+              <button type="submit" aria-label="Search"><Search size={17} /></button>
+            </form>
+            <NavLink to="/products" onClick={closeMobileMenu}>Shop All</NavLink>
+            <Link to="/category" onClick={closeMobileMenu}>Collections</Link>
+            {categories.filter((category) => !category.parentCategory).map((category) => (
+              <Link key={category.slug} to={`/category/${category.slug}`} onClick={closeMobileMenu}>
+                {category.name}
+              </Link>
+            ))}
             <Link to="/about" onClick={closeMobileMenu}>About</Link>
+            <Link to="/about" onClick={closeMobileMenu}>Contact</Link>
             <Link to="/wishlist" onClick={closeMobileMenu}>
               Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
             </Link>
-            <Link to="/journal" onClick={closeMobileMenu}>Journal</Link>
             <button
               type="button"
               className={tw("vanta-mobile-theme-button")}

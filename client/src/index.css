@@ -222,3 +222,405 @@ html:not(.dark) .vanta-about-page .about-border { border-color: var(--vanta-bord
 .vanta-footer .text-stone-400, .vanta-footer .text-stone-500 { color: var(--vanta-muted) !important; }
 .vanta-footer .text-stone-300 { color: var(--vanta-text) !important; }
 .vanta-footer .border-stone-800, .vanta-footer .border-stone-700 { border-color: var(--vanta-border) !important; }
+
+/* Mobile navbar theme fix: keep menu text readable in both themes. */
+@media (max-width: 800px) {
+  .vanta-reference-mobile-menu,
+  html.dark .vanta-reference-mobile-menu,
+  html:not(.dark) .vanta-reference-mobile-menu {
+    background: var(--vanta-surface) !important;
+    color: var(--vanta-text) !important;
+    border-top-color: var(--vanta-border) !important;
+  }
+
+  .vanta-reference-mobile-menu a,
+  .vanta-reference-mobile-menu > button,
+  html.dark .vanta-reference-mobile-menu a,
+  html.dark .vanta-reference-mobile-menu > button,
+  html:not(.dark) .vanta-reference-mobile-menu a,
+  html:not(.dark) .vanta-reference-mobile-menu > button {
+    color: var(--vanta-text) !important;
+    border-bottom-color: var(--vanta-border) !important;
+    background: transparent !important;
+  }
+
+  .vanta-reference-mobile-auth button,
+  html:not(.dark) .vanta-reference-mobile-auth button {
+    color: var(--vanta-text) !important;
+    background: var(--vanta-soft) !important;
+    border-color: var(--vanta-border) !important;
+  }
+}
+
+/* =========================================================
+   COLLECTION / MEGA-MENU REFERENCE UI
+   ========================================================= */
+.vanta-mega-trigger-wrap { position: relative; }
+.vanta-mega-trigger {
+  display:inline-flex; align-items:center; gap:5px; border:0; background:transparent;
+  color:var(--vanta-text); font:inherit; font-size:10px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.2em; padding:0; cursor:pointer;
+}
+.vanta-mega-trigger:hover,.vanta-mega-trigger.is-open { color:var(--vanta-accent); }
+.vanta-mega-menu {
+  position:absolute; z-index:120; top:calc(100% + 27px); left:50%; transform:translateX(-50%);
+  width:min(900px,calc(100vw - 36px)); min-height:270px; display:grid;
+  grid-template-columns:190px 1fr 290px; gap:0; overflow:hidden;
+  border:1px solid var(--vanta-border); border-radius:12px; background:var(--vanta-surface);
+  box-shadow:0 24px 60px rgba(0,0,0,.14); color:var(--vanta-text);
+}
+.vanta-mega-menu::before {
+  content:""; position:absolute; top:-8px; left:50%; width:16px; height:16px;
+  background:var(--vanta-surface); border-left:1px solid var(--vanta-border);
+  border-top:1px solid var(--vanta-border); transform:translateX(-50%) rotate(45deg);
+}
+.vanta-mega-column { padding:24px; position:relative; z-index:1; }
+.vanta-mega-column + .vanta-mega-column { border-left:1px solid var(--vanta-border); }
+.vanta-mega-column > p {
+  margin:0 0 16px; color:var(--vanta-accent); font-size:8px; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+}
+.vanta-mega-root-link {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:10px 0; color:var(--vanta-text)!important; font-size:12px; text-decoration:none;
+}
+.vanta-mega-root-link:hover { color:var(--vanta-accent)!important; }
+.vanta-mega-subgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; }
+.vanta-mega-subgrid a {
+  display:flex; flex-direction:column; gap:3px; color:var(--vanta-text)!important;
+  font-size:11px; text-decoration:none;
+}
+.vanta-mega-subgrid a:hover { color:var(--vanta-accent)!important; }
+.vanta-mega-subgrid small { color:var(--vanta-muted); font-size:8px; }
+.vanta-mega-feature {
+  position:relative; display:flex; align-items:flex-end; min-height:270px; padding:24px;
+  color:#fff!important; text-decoration:none; overflow:hidden;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.72)),
+    url("https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=85")
+    center/cover;
+}
+.vanta-mega-feature > div { position:relative; z-index:1; }
+.vanta-mega-feature span { font-size:8px; letter-spacing:.16em; font-weight:700; color:#d6ad75; }
+.vanta-mega-feature h3 {
+  margin:8px 0 18px; max-width:210px; color:#fff; font-family:"Playfair Display",Georgia,serif;
+  font-size:25px; line-height:1.05; font-weight:500;
+}
+.vanta-mega-feature strong { display:inline-flex; padding:10px 13px; background:#fff; color:#111; font-size:8px; letter-spacing:.1em; text-transform:uppercase; }
+.vanta-mega-feature strong span { color:#111; margin-left:6px; }
+@media (max-width:1050px) {
+  .vanta-mega-menu { width:min(760px,calc(100vw - 28px)); grid-template-columns:170px 1fr 240px; }
+  .vanta-mega-column { padding:20px; }
+}
+@media (max-width:800px) {
+  .vanta-mega-trigger-wrap { display:none; }
+}
+
+/* Collection page polish */
+.vanta-category-pills {
+  width:min(1240px,calc(100% - 40px)); margin:0 auto; display:flex; gap:8px;
+  overflow-x:auto; padding:18px 0 4px; scrollbar-width:none;
+}
+.vanta-category-pills::-webkit-scrollbar { display:none; }
+.vanta-category-pill {
+  flex:none; padding:9px 14px; border:1px solid var(--vanta-border);
+  background:var(--vanta-surface); color:var(--vanta-muted)!important;
+  font-size:8px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  white-space:nowrap; transition:.18s ease;
+}
+.vanta-category-pill:hover { border-color:var(--vanta-text); color:var(--vanta-text)!important; }
+.vanta-category-pill.active { background:var(--vanta-text); color:var(--vanta-bg)!important; border-color:var(--vanta-text); }
+.vanta-collection-layout { position:relative; }
+.vanta-filter-backdrop { display:none; }
+.vanta-price-labels { display:flex; justify-content:space-between; color:var(--vanta-muted); font-size:8px; }
+.vanta-range-input {
+  position:absolute; inset:0; width:100%; height:100%; appearance:none; background:transparent;
+  pointer-events:none; z-index:20;
+}
+.vanta-range-input.max { z-index:30; }
+.vanta-range-input::-webkit-slider-runnable-track { height:2px; background:transparent; }
+.vanta-range-input::-webkit-slider-thumb {
+  appearance:none; pointer-events:auto; width:12px; height:12px; margin-top:-5px;
+  border-radius:50%; border:1px solid var(--vanta-text); background:var(--vanta-bg);
+}
+.vanta-range-input::-moz-range-track { height:2px; background:transparent; }
+.vanta-range-input::-moz-range-thumb {
+  pointer-events:auto; width:12px; height:12px; border-radius:50%;
+  border:1px solid var(--vanta-text); background:var(--vanta-bg);
+}
+.vanta-color-swatches { display:flex; flex-wrap:wrap; gap:12px; }
+.vanta-color-dot {
+  width:19px; height:19px; padding:0; border-radius:50%; border:3px solid var(--vanta-surface);
+  outline:1px solid var(--vanta-border); cursor:pointer; transition:.16s ease;
+}
+.vanta-color-dot:hover { transform:scale(1.08); }
+.vanta-color-dot.active { outline:2px solid var(--vanta-text); outline-offset:2px; }
+.vanta-discount-badge {
+  flex:none; padding:3px 5px; border-radius:3px; background:#111; color:#fff;
+  font-size:7px; font-weight:700; line-height:1;
+}
+.vanta-product-color-label {
+  display:flex; align-items:center; gap:6px; margin-top:8px;
+  color:var(--vanta-muted); font-size:8px; text-transform:capitalize;
+}
+.vanta-mini-color { width:11px; height:11px; border-radius:50%; border:1px solid var(--vanta-border); }
+.vanta-mini-color.black { background:#111; }
+.vanta-mini-color.brown { background:#654323; }
+.vanta-mini-color.tan,.vanta-mini-color.beige { background:#bd8d55; }
+.vanta-mini-color.cream,.vanta-mini-color.white { background:#eee8dc; }
+.vanta-mini-color.grey,.vanta-mini-color.gray { background:#aaa; }
+.vanta-mini-color.green { background:#17694e; }
+.vanta-mini-color.pink { background:#d9919b; }
+.vanta-old-price.inline { display:inline; margin:0; }
+.vanta-collection-pagination button.active {
+  background:var(--vanta-text); color:var(--vanta-bg); border-color:var(--vanta-text);
+}
+.vanta-collection-pagination { gap:7px; }
+@media (min-width:901px) {
+  .vanta-collection-layout { grid-template-columns:220px minmax(0,1fr)!important; gap:30px!important; }
+  .vanta-collection-grid { grid-template-columns:repeat(4,minmax(0,1fr))!important; gap:28px 14px!important; }
+}
+@media (max-width:900px) {
+  .vanta-collection-sidebar {
+    transform:translateX(-105%);
+    position:fixed!important; z-index:100; inset:0 auto 0 0; width:min(310px,88vw)!important;
+    height:100vh; padding:20px; overflow-y:auto; background:var(--vanta-surface)!important;
+    border-right:1px solid var(--vanta-border)!important; box-shadow:20px 0 50px rgba(0,0,0,.14);
+    transition:transform .25s ease;
+  }
+  .vanta-collection-sidebar.is-open { transform:translateX(0); }
+  .vanta-filter-backdrop {
+    display:block; position:fixed; inset:0; z-index:90; background:rgba(0,0,0,.35);
+    border:0; backdrop-filter:blur(2px);
+  }
+}
+@media (max-width:640px) {
+  .vanta-category-pills { width:calc(100% - 24px); }
+  .vanta-collection-toolbar { padding:0; }
+  .vanta-collection-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:24px 10px!important; }
+}
+
+.vanta-reference-logo {
+  display:inline-flex!important; flex-direction:column; align-items:flex-start; justify-content:center;
+  gap:0; line-height:1; letter-spacing:.28em!important; font-size:20px!important;
+}
+.vanta-reference-logo small {
+  margin:4px 0 0 28px; font-size:6px; line-height:1; letter-spacing:.42em;
+  color:var(--vanta-muted)!important;
+}
+.vanta-navbar-search {
+  width:min(330px,26vw); height:38px; display:flex; align-items:center;
+  border:1px solid var(--vanta-border); border-radius:999px; background:var(--vanta-surface);
+}
+.vanta-navbar-search input {
+  width:100%; min-width:0; height:100%; padding:0 13px; border:0; outline:0;
+  background:transparent; color:var(--vanta-text); font-size:10px;
+}
+.vanta-navbar-search input::placeholder { color:var(--vanta-muted); }
+.vanta-navbar-search button {
+  width:42px; height:100%; display:grid; place-items:center; flex:none;
+  border:0; background:transparent; color:var(--vanta-text);
+}
+.vanta-mobile-search {
+  display:flex; align-items:center; height:42px; margin:4px 0 10px;
+  border:1px solid var(--vanta-border); background:var(--vanta-surface);
+}
+.vanta-mobile-search input {
+  min-width:0; flex:1; height:100%; border:0; outline:0; padding:0 12px;
+  background:transparent; color:var(--vanta-text); font-size:11px;
+}
+.vanta-mobile-search button {
+  width:42px; height:100%; border:0; background:transparent; color:var(--vanta-text);
+}
+@media (max-width:1050px) {
+  .vanta-navbar-search { width:240px; }
+}
+@media (max-width:800px) {
+  .vanta-navbar-search { display:none; }
+}
+
+html:not(.dark) .vanta-reference-navbar .vanta-mega-feature,
+html:not(.dark) .vanta-reference-navbar .vanta-mega-feature * { color:#fff!important; }
+html:not(.dark) .vanta-reference-navbar .vanta-mega-feature span { color:#d6ad75!important; }
+html:not(.dark) .vanta-reference-navbar .vanta-mega-feature strong,
+html:not(.dark) .vanta-reference-navbar .vanta-mega-feature strong span { color:#111!important; }
+
+.vanta-reference-header:not(.vanta-header-home) { position:relative!important; top:auto!important; }
+
+.vanta-collection-benefits {
+  margin-top:70px; min-height:86px; display:grid; grid-template-columns:repeat(4,1fr);
+  border-top:1px solid var(--vanta-border); border-bottom:1px solid var(--vanta-border);
+  background:var(--vanta-surface);
+}
+.vanta-collection-benefits > div {
+  display:flex; align-items:center; justify-content:center; gap:13px; padding:16px 20px;
+  border-right:1px solid var(--vanta-border); color:var(--vanta-text);
+}
+.vanta-collection-benefits > div:last-child { border-right:0; }
+.vanta-collection-benefits svg { flex:none; }
+.vanta-collection-benefits strong {
+  display:block; font-size:10px; font-weight:700;
+}
+.vanta-collection-benefits span {
+  display:block; margin-top:4px; color:var(--vanta-muted); font-size:9px;
+}
+@media (max-width:800px) {
+  .vanta-collection-benefits { grid-template-columns:1fr 1fr; }
+  .vanta-collection-benefits > div:nth-child(2) { border-right:0; }
+  .vanta-collection-benefits > div:nth-child(-n+2) { border-bottom:1px solid var(--vanta-border); }
+}
+@media (max-width:520px) {
+  .vanta-collection-benefits { grid-template-columns:1fr; }
+  .vanta-collection-benefits > div { border-right:0; border-bottom:1px solid var(--vanta-border); justify-content:flex-start; }
+  .vanta-collection-benefits > div:last-child { border-bottom:0; }
+}
+
+/* Exact mobile navbar treatment: inspired by the supplied mobile reference. */
+@media (max-width:900px) {
+  .vanta-reference-header {
+    position:relative !important;
+    top:auto !important;
+    left:auto !important;
+    width:100%;
+    z-index:100;
+  }
+
+  .vanta-reference-header .vanta-promo {
+    display:flex !important;
+    height:27px;
+    padding:0 10px;
+    font-size:7px;
+    letter-spacing:.12em;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+
+  .vanta-reference-navbar-inner,
+  .vanta-reference-navbar > .vanta-reference-navbar-inner {
+    display:none !important;
+  }
+
+  .vanta-reference-mobile-bar {
+    box-shadow:0 1px 0 rgba(0,0,0,.02);
+  }
+
+  .vanta-mobile-bar-logo span {
+    font-size:18px;
+    font-weight:700;
+  }
+
+  .vanta-mobile-bar-logo small {
+    margin-top:3px;
+    margin-left:5px;
+    font-size:5px;
+    font-weight:600;
+    letter-spacing:.42em;
+  }
+
+  .vanta-mobile-bar-cart span {
+    position:absolute;
+    top:1px;
+    right:-1px;
+    min-width:14px;
+    height:14px;
+    padding:0 3px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    background:var(--vanta-text);
+    color:var(--vanta-bg);
+    font-size:8px;
+    font-weight:700;
+    line-height:1;
+  }
+
+  .vanta-reference-mobile-menu {
+    position:absolute !important;
+    left:0;
+    right:0;
+    top:81px;
+    z-index:120;
+    max-height:calc(100svh - 81px);
+    overflow-y:auto;
+    box-shadow:0 18px 35px rgba(0,0,0,.12);
+  }
+}
+
+
+/* =========================================================
+   ADMIN THEME
+   Admin pages use Tailwind stone utilities, so scope a theme
+   layer here to make every admin surface follow the global theme.
+   ========================================================= */
+.vanta-admin-shell {
+  background: var(--vanta-bg) !important;
+  color: var(--vanta-text);
+}
+
+/* Dark mode: translate the existing admin stone/white utilities. */
+html.dark .vanta-admin-shell .bg-stone-50 { background: var(--vanta-bg) !important; }
+html.dark .vanta-admin-shell .bg-stone-100 { background: var(--vanta-soft) !important; }
+html.dark .vanta-admin-shell .bg-stone-200 { background: #292b29 !important; }
+html.dark .vanta-admin-shell .bg-stone-950 { background: #f2f0e9 !important; }
+html.dark .vanta-admin-shell .bg-white { background: var(--vanta-surface) !important; }
+
+html.dark .vanta-admin-shell .text-stone-950,
+html.dark .vanta-admin-shell .text-stone-900,
+html.dark .vanta-admin-shell .text-stone-800,
+html.dark .vanta-admin-shell .text-stone-700 { color: var(--vanta-text) !important; }
+html.dark .vanta-admin-shell .text-stone-600,
+html.dark .vanta-admin-shell .text-stone-500,
+html.dark .vanta-admin-shell .text-stone-400 { color: var(--vanta-muted) !important; }
+html.dark .vanta-admin-shell .text-white { color: #111 !important; }
+
+html.dark .vanta-admin-shell .border-stone-100,
+html.dark .vanta-admin-shell .border-stone-200,
+html.dark .vanta-admin-shell .border-stone-300 { border-color: var(--vanta-border) !important; }
+
+html.dark .vanta-admin-shell .hover\\:bg-stone-50:hover { background: var(--vanta-soft) !important; }
+html.dark .vanta-admin-shell .hover\\:bg-stone-100:hover { background: var(--vanta-soft) !important; }
+html.dark .vanta-admin-shell .hover\\:bg-stone-800:hover { background: #dedbd2 !important; }
+html.dark .vanta-admin-shell .hover\\:bg-white:hover { background: var(--vanta-surface) !important; }
+
+/* Inputs, selects and textareas inside admin forms. */
+html.dark .vanta-admin-shell input,
+html.dark .vanta-admin-shell textarea,
+html.dark .vanta-admin-shell select {
+  background: var(--vanta-surface) !important;
+  color: var(--vanta-text) !important;
+  border-color: var(--vanta-border) !important;
+}
+html.dark .vanta-admin-shell input::placeholder,
+html.dark .vanta-admin-shell textarea::placeholder {
+  color: var(--vanta-muted) !important;
+}
+html.dark .vanta-admin-shell input:focus,
+html.dark .vanta-admin-shell textarea:focus,
+html.dark .vanta-admin-shell select:focus {
+  border-color: var(--vanta-text) !important;
+}
+
+/* Modal overlay and product-image placeholders. */
+html.dark .vanta-admin-shell .bg-black\\/50 { background: rgba(0,0,0,.72) !important; }
+html.dark .vanta-admin-shell .bg-white\\/90 { background: rgba(21,23,22,.92) !important; }
+
+/* Keep the primary admin buttons visually inverted in dark mode. */
+html.dark .vanta-admin-shell .bg-stone-950.text-white {
+  background: var(--vanta-text) !important;
+  color: #111 !important;
+}
+
+/* Status badges retain their meaning but become darker, less glaring. */
+html.dark .vanta-admin-shell .bg-amber-50 { background: #2d281c !important; }
+html.dark .vanta-admin-shell .bg-blue-50 { background: #1d2731 !important; }
+html.dark .vanta-admin-shell .bg-purple-50 { background: #28212f !important; }
+html.dark .vanta-admin-shell .bg-indigo-50 { background: #20253a !important; }
+html.dark .vanta-admin-shell .bg-emerald-50 { background: #1b2a24 !important; }
+html.dark .vanta-admin-shell .bg-red-50 { background: #301f20 !important; }
+html.dark .vanta-admin-shell .border-amber-200 { border-color: #67532b !important; }
+html.dark .vanta-admin-shell .border-blue-200 { border-color: #334e66 !important; }
+html.dark .vanta-admin-shell .border-purple-200 { border-color: #554064 !important; }
+html.dark .vanta-admin-shell .border-indigo-200 { border-color: #3e4b78 !important; }
+html.dark .vanta-admin-shell .border-emerald-200 { border-color: #315b49 !important; }
+html.dark .vanta-admin-shell .border-red-200 { border-color: #633436 !important; }

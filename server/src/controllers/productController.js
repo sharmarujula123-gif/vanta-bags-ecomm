@@ -91,7 +91,7 @@ export const createProduct = async (req, res) => {
 
   const populatedProduct = await Product.findById(product._id).populate(
     "category",
-    "name slug"
+    "name slug parentCategory"
   );
 
   return res.status(201).json({
@@ -104,179 +104,451 @@ export const createProduct = async (req, res) => {
 };
 
 export const getProducts = async (req, res) => {
-    const {
-      search,
-      category,
-      minPrice,
-      maxPrice,
-      featured,
-      sort = "newest",
-      page = 1,
-      limit = 12,
-    } = req.query;
+    try {
+      const {
+        search,
+        category,
+        minPrice,
+        maxPrice,
+        featured,
+        color,
+        material,
+        sort = "newest",
+        page = 1,
+        limit = 12,
+      } = req.query;
   
-    const filter = {
-      isActive: true,
-    };
+      const filter = {
+        isActive: true,
+      };
   
-    // Search
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { brand: { $regex: search, $options: "i" } },
-      ];
+      // =========================================================
+      // SEARCH
+      // =========================================================
+  
+      if (search) {
+        filter.$or = [
+          {
+            name: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            description: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            brand: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+        ];
+      }
+  
+      // =========================================================
+      // CATEGORY
+      // =========================================================
+  
+      if (category) {
+        const categoryValue = String(category).trim();
+  
+        let categoryDoc = null;
+  
+        // -------------------------------------------------------
+        // 1. MongoDB ObjectId
+        // -------------------------------------------------------
+  
+        if (mongoose.isValidObjectId(categoryValue)) {
+          categoryDoc = await Category.findOne({
+            _id: categoryValue,
+            isActive: true,
+          });
+        }
+  
+        // -------------------------------------------------------
+        // 2. Slug
+        // -------------------------------------------------------
+  
+        if (!categoryDoc) {
+          categoryDoc = await Category.findOne({
+            slug: categoryValue.toLowerCase(),
+            isActive: true,
+          });
+        }
+  
+        // -------------------------------------------------------
+        // 3. Exact category name
+        // -------------------------------------------------------
+  
+        if (!categoryDoc) {
+          const escapedValue = categoryValue.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+          );
+  
+          categoryDoc = await Category.findOne({
+            name: {
+              $regex: new RegExp(`^${escapedValue}$`, "i"),
+            },
+            isActive: true,
+          });
+        }
+  
+        // -------------------------------------------------------
+        // 4. Normalized slug fallback
+        // -------------------------------------------------------
+  
+        if (!categoryDoc) {
+          const normalized = categoryValue
+            .toLowerCase()
+            .trim()
+            .replace(/&/g, "and")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
+  
+          const candidates = [
+            normalized,
+            normalized.endsWith("s")
+              ? normalized.slice(0, -1)
+              : `${normalized}s`,
+            normalized.endsWith("-bags")
+              ? normalized.slice(0, -5)
+              : `${normalized}-bags`,
+          ].filter(Boolean);
+  
+          categoryDoc = await Category.findOne({
+            isActive: true,
+            $or: [
+              {
+                slug: {
+                  $in: candidates,
+                },
+              },
+              {
+                name: {
+                  $in: candidates,
+                },
+              },
+            ],
+          });
+        }
+  
+        // -------------------------------------------------------
+        // Category must exist
+        // -------------------------------------------------------
+  
+        if (!categoryDoc) {
+          return res.status(404).json({
+            success: false,
+            message: "Category not found",
+          });
+        }
+  
+        // =======================================================
+        // IMPORTANT
+        //
+        // Determine whether this is a ROOT category.
+        //
+        // Root:
+        //   Bags
+        //   Footwear
+        //   Dresses
+        //   Jewelry
+        //   Tops
+        //
+        // Subcategory:
+        //   Backpacks
+        //   Sneakers
+        //   Heels
+        //   etc.
+        // =======================================================
+  
+        const isRootCategory =
+          !categoryDoc.parentCategory;
+  
+        // -------------------------------------------------------
+        // ROOT CATEGORY
+        // -------------------------------------------------------
+  
+        if (isRootCategory) {
+          /*
+           * First collect the root category itself.
+           */
+          const categoryIds = [categoryDoc._id];
+  
+          /*
+           * Find every descendant recursively.
+           *
+           * This supports:
+           *
+           * Bags
+           *   ├── Handbags
+           *   ├── Backpacks
+           *   ├── Travel Bags
+           *   ├── Duffle Bags
+           *   └── Laptop Bags
+           *
+           * Footwear
+           *   ├── Sneakers
+           *   ├── Heels
+           *   ├── Flats
+           *   ├── Boots
+           *   ├── Sandals
+           *   └── Loafers
+           */
+  
+          let parentsToSearch = [categoryDoc._id];
+  
+          while (parentsToSearch.length > 0) {
+            const children = await Category.find({
+              parentCategory: {
+                $in: parentsToSearch,
+              },
+              isActive: true,
+            }).select("_id");
+  
+            if (!children.length) {
+              break;
+            }
+  
+            const childIds = children.map(
+              (child) => child._id
+            );
+  
+            categoryIds.push(...childIds);
+  
+            parentsToSearch = childIds;
+          }
+  
+          /*
+           * Remove duplicate IDs.
+           */
+  
+          const uniqueCategoryIds = [
+            ...new Map(
+              categoryIds.map((id) => [
+                String(id),
+                id,
+              ])
+            ).values(),
+          ];
+  
+          filter.category = {
+            $in: uniqueCategoryIds,
+          };
+        } else {
+          // -----------------------------------------------------
+          // SUBCATEGORY
+          //
+          // Example:
+          //
+          // /category/sneakers
+          //
+          // should ONLY return Sneakers.
+          // -----------------------------------------------------
+  
+          filter.category = categoryDoc._id;
+        }
+      }
+  
+      // =========================================================
+      // PRICE
+      // =========================================================
+  
+      if (
+        minPrice !== undefined ||
+        maxPrice !== undefined
+      ) {
+        filter.price = {};
+  
+        if (minPrice !== undefined) {
+          filter.price.$gte = Number(minPrice);
+        }
+  
+        if (maxPrice !== undefined) {
+          filter.price.$lte = Number(maxPrice);
+        }
+      }
+  
+      // =========================================================
+      // FEATURED
+      // =========================================================
+  
+      if (featured !== undefined) {
+        filter.isFeatured =
+          featured === "true";
+      }
+  
+      // =========================================================
+      // COLOR
+      // =========================================================
+  
+      if (color) {
+        filter.color = {
+          $regex: String(color).trim(),
+          $options: "i",
+        };
+      }
+  
+      // =========================================================
+      // MATERIAL
+      // =========================================================
+  
+      if (material) {
+        filter.material = {
+          $regex: String(material).trim(),
+          $options: "i",
+        };
+      }
+  
+      // =========================================================
+      // PAGINATION
+      // =========================================================
+  
+      const currentPage = Math.max(
+        Number(page) || 1,
+        1
+      );
+  
+      const itemsPerPage = Math.min(
+        Math.max(Number(limit) || 12, 1),
+        100
+      );
+  
+      const skip =
+        (currentPage - 1) * itemsPerPage;
+  
+      // =========================================================
+      // SORTING
+      // =========================================================
+  
+      let sortOption = {
+        createdAt: -1,
+      };
+  
+      if (sort === "price_asc") {
+        sortOption = {
+          price: 1,
+        };
+      }
+  
+      if (sort === "price_desc") {
+        sortOption = {
+          price: -1,
+        };
+      }
+  
+      if (sort === "name_asc") {
+        sortOption = {
+          name: 1,
+        };
+      }
+  
+      if (sort === "name_desc") {
+        sortOption = {
+          name: -1,
+        };
+      }
+  
+      // =========================================================
+      // FETCH PRODUCTS
+      // =========================================================
+  
+      const [products, totalProducts] =
+        await Promise.all([
+          Product.find(filter)
+            .populate(
+              "category",
+              "name slug parentCategory"
+            )
+            .sort(sortOption)
+            .skip(skip)
+            .limit(itemsPerPage),
+  
+          Product.countDocuments(filter),
+        ]);
+  
+      // =========================================================
+      // PAGINATION
+      // =========================================================
+  
+      const totalPages =
+        totalProducts === 0
+          ? 0
+          : Math.ceil(
+              totalProducts / itemsPerPage
+            );
+  
+      // =========================================================
+      // RESPONSE
+      // =========================================================
+  
+      return res.status(200).json({
+        success: true,
+  
+        data: {
+          products,
+  
+          pagination: {
+            currentPage,
+            itemsPerPage,
+            totalProducts,
+            totalPages,
+  
+            hasNextPage:
+              currentPage < totalPages,
+  
+            hasPreviousPage:
+              currentPage > 1,
+          },
+        },
+      });
+    } catch (error) {
+      console.error(
+        "GET PRODUCTS ERROR:",
+        error
+      );
+  
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load products",
+        error: error.message,
+      });
     }
-    // Category
-    // Accept category slug, MongoDB ObjectId, or category name.
-    if (category) {
-      const categoryValue = String(category).trim();
-      let categoryDoc = null;
-
-      if (mongoose.isValidObjectId(categoryValue)) {
-        categoryDoc = await Category.findOne({
-          _id: categoryValue,
-          isActive: true,
-        });
-      }
-
-      if (!categoryDoc) {
-        categoryDoc = await Category.findOne({
-          slug: categoryValue.toLowerCase(),
-          isActive: true,
-        });
-      }
-
-      if (!categoryDoc) {
-        categoryDoc = await Category.findOne({
-          name: { $regex: new RegExp(`^${categoryValue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
-          isActive: true,
-        });
-      }
-
-      // Be forgiving with legacy category slugs such as "duffle-bag" vs
-      // "duffle-bags" and with names containing punctuation/spaces.
-      if (!categoryDoc) {
-        const normalized = categoryValue
-          .toLowerCase()
-          .trim()
-          .replace(/&/g, "and")
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "");
-
-        const candidates = [
-          normalized,
-          normalized.endsWith("-bags") ? normalized.slice(0, -1) : `${normalized}s`,
-          normalized.endsWith("-bag") ? `${normalized}s` : normalized,
-          normalized.endsWith("-bags") ? normalized.slice(0, -5) : normalized,
-        ].filter(Boolean);
-
-        categoryDoc = await Category.findOne({
-          isActive: true,
-          slug: { $in: candidates },
-        });
-      }
-
-      if (!categoryDoc) {
+  };
+  export const getProductBySlug = async (req, res) => {
+    try {
+      const product = await Product.findOne({
+        slug: req.params.slug,
+        isActive: true,
+      }).populate("category", "name slug parentCategory");
+  
+      if (!product) {
         return res.status(404).json({
           success: false,
-          message: "Category not found",
+          message: "Product not found",
         });
       }
-
-      filter.category = categoryDoc._id;
-    }
-
-    // Price range
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      filter.price = {};
   
-      if (minPrice !== undefined) {
-        filter.price.$gte = Number(minPrice);
-      }
-  
-      if (maxPrice !== undefined) {
-        filter.price.$lte = Number(maxPrice);
-      }
-    }
-  
-    // Featured
-    if (featured !== undefined) {
-      filter.isFeatured = featured === "true";
-    }
-  
-    // Pagination
-    const currentPage = Math.max(Number(page), 1);
-    const itemsPerPage = Math.min(Math.max(Number(limit), 1), 100);
-    const skip = (currentPage - 1) * itemsPerPage;
-  
-    // Sorting
-    let sortOption = { createdAt: -1 };
-  
-    if (sort === "price_asc") {
-      sortOption = { price: 1 };
-    }
-  
-    if (sort === "price_desc") {
-      sortOption = { price: -1 };
-    }
-  
-    if (sort === "name_asc") {
-      sortOption = { name: 1 };
-    }
-  
-    if (sort === "name_desc") {
-      sortOption = { name: -1 };
-    }
-  
-    const [products, totalProducts] = await Promise.all([
-      Product.find(filter)
-        .populate("category", "name slug")
-        .sort(sortOption)
-        .skip(skip)
-        .limit(itemsPerPage),
-  
-      Product.countDocuments(filter),
-    ]);
-  
-    const totalPages = Math.ceil(totalProducts / itemsPerPage);
-  
-    return res.status(200).json({
-      success: true,
-      data: {
-        products,
-        pagination: {
-          currentPage,
-          itemsPerPage,
-          totalProducts,
-          totalPages,
-          hasNextPage: currentPage < totalPages,
-          hasPreviousPage: currentPage > 1,
+      return res.status(200).json({
+        success: true,
+        data: {
+          product,
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error("Get product by slug error:", error);
+  
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch product",
+      });
+    }
   };
-
-export const getProductBySlug = async (req, res) => {
-  const product = await Product.findOne({
-    slug: req.params.slug,
-    isActive: true,
-  }).populate("category", "name slug");
-
-  if (!product) {
-    return res.status(404).json({
-      success: false,
-      message: "Product not found",
-    });
-  }
-
-  return res.status(200).json({
-    success: true,
-    data: {
-      product,
-    },
-  });
-};
 export const updateProduct = async (req, res) => {
   const { id } = req.params;
 
@@ -375,7 +647,7 @@ export const updateProduct = async (req, res) => {
       new: true,
       runValidators: true,
     }
-  ).populate("category", "name slug");
+  ).populate("category", "name slug parentCategory");
 
   return res.status(200).json({
     success: true,
@@ -432,7 +704,7 @@ export const deactivateProduct = async (req, res) => {
         new: true,
         runValidators: true,
       }
-    ).populate("category", "name slug");
+    ).populate("category", "name slug parentCategory");
   
     if (!product) {
       return res.status(404).json({
@@ -450,7 +722,7 @@ export const deactivateProduct = async (req, res) => {
     });
   };
 export const activateProduct = async (req, res) => {
-  const product = await Product.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true }).populate("category", "name slug");
+  const product = await Product.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true }).populate("category", "name slug parentCategory");
   if (!product) return res.status(404).json({ success: false, message: "Product not found" });
   return res.status(200).json({ success: true, message: "Product activated successfully", data: { product } });
 };

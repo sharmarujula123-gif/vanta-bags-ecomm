@@ -137,16 +137,41 @@ export default function AdminProductForm({
                       Select category
                     </option>
 
-                    {categories.map(
-                      (category) => (
-                        <option
-                          key={category._id}
-                          value={category._id}
-                        >
+                    {categories
+                      .filter((category) => !category.parentCategory)
+                      .map((parent) => {
+                        const children = categories.filter((category) => {
+                          const relation = category.parentCategory;
+                          if (!relation) return false;
+                          return (
+                            (relation._id && String(relation._id) === String(parent._id)) ||
+                            String(relation) === String(parent._id)
+                          );
+                        });
+
+                        return (
+                          <optgroup key={parent._id} label={parent.name}>
+                            {children.length ? (
+                              children.map((category) => (
+                                <option key={category._id} value={category._id}>
+                                  {category.name}
+                                </option>
+                              ))
+                            ) : (
+                              <option value={parent._id}>{parent.name}</option>
+                            )}
+                          </optgroup>
+                        );
+                      })}
+
+                    {/* Backward compatibility for older flat categories */}
+                    {categories
+                      .filter((category) => category.parentCategory && !categories.some((parent) => String(parent._id) === String(category.parentCategory)))
+                      .map((category) => (
+                        <option key={category._id} value={category._id}>
                           {category.name}
                         </option>
-                      )
-                    )}
+                      ))}
                   </select>
                 </div>
 

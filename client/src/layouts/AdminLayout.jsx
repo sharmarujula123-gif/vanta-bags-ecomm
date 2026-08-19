@@ -55,7 +55,7 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="vanta-admin-shell min-h-screen bg-stone-50">
 
       {/* Admin header */}
 

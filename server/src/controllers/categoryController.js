@@ -3,7 +3,7 @@ import slugify from "slugify";
 import mongoose from "mongoose";
 
 export const createCategory = async (req, res) => {
-  const { name, description, image } = req.body;
+  const { name, description, image, parentCategory } = req.body;
 
   if (!name) {
     return res.status(400).json({
@@ -28,11 +28,28 @@ export const createCategory = async (req, res) => {
     });
   }
 
+  let parent = null;
+
+  if (parentCategory) {
+    parent = await Category.findOne({
+      _id: parentCategory,
+      isActive: true,
+    });
+
+    if (!parent) {
+      return res.status(404).json({
+        success: false,
+        message: "Parent category not found",
+      });
+    }
+  }
+
   const category = await Category.create({
     name,
     slug,
     description,
     image,
+    parentCategory: parent?._id || null,
   });
 
   return res.status(201).json({
@@ -47,7 +64,9 @@ export const createCategory = async (req, res) => {
 export const getCategories = async (req, res) => {
   const categories = await Category.find({
     isActive: true,
-  }).sort({ name: 1 });
+  })
+    .populate("parentCategory", "name slug")
+    .sort({ parentCategory: 1, name: 1 });
 
   return res.status(200).json({
     success: true,
@@ -65,21 +84,21 @@ export const getCategoryBySlug = async (req, res) => {
     category = await Category.findOne({
       _id: value,
       isActive: true,
-    });
+    }).populate("parentCategory", "name slug");
   }
 
   if (!category) {
     category = await Category.findOne({
       slug: value.toLowerCase(),
       isActive: true,
-    });
+    }).populate("parentCategory", "name slug");
   }
 
   if (!category) {
     category = await Category.findOne({
       name: { $regex: new RegExp(`^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
       isActive: true,
-    });
+    }).populate("parentCategory", "name slug");
   }
 
   if (!category) {
@@ -99,7 +118,7 @@ export const getCategoryBySlug = async (req, res) => {
     category = await Category.findOne({
       slug: { $in: candidates },
       isActive: true,
-    });
+    }).populate("parentCategory", "name slug");
   }
 
   if (!category) {

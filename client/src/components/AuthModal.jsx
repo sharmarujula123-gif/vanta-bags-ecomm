@@ -1,6 +1,8 @@
 import { tw } from "../utils/twStyles.js";
 import { useEffect } from "react";
 import { X } from "lucide-react";
+
+const AUTH_IMAGE = "https://res.cloudinary.com/q9toon94/image/upload/v1786812733/vanta-bags/products/handbag-4.jpg";
 import { useAuthModal } from "../context/AuthModalContext";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
@@ -42,6 +44,15 @@ const AuthModal = () => {
         aria-labelledby="vanta-auth-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
+        <div className={tw("vanta-auth-image")}>
+          <img src={AUTH_IMAGE} alt="VANTA Bags collection" />
+          <div className={tw("vanta-auth-image-overlay")} />
+          <div className={tw("vanta-auth-image-copy")}>
+            <span>VANTA BAGS</span>
+            <strong>Carry your<br />signature.</strong>
+          </div>
+        </div>
+
         <button
           type="button"
           className={tw("vanta-auth-close")}
