@@ -1158,7 +1158,7 @@ const Products = ({ categorySlug = "" }) => {
                 )}
               </button>
 
-              <p
+              {/* <p
                 className={tw(
                   "text-[11px] text-[var(--vanta-text)]"
                 )}
@@ -1179,7 +1179,7 @@ const Products = ({ categorySlug = "" }) => {
                 of{" "}
                 {pagination.totalProducts}{" "}
                 products
-              </p>
+              </p> */}
             </div>
 
             <div
