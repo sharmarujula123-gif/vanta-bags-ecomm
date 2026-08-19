@@ -8,16 +8,16 @@ import {
 
 const accessTokenCookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
     maxAge: 15 * 60 * 1000,
   };
   
   const refreshTokenCookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
@@ -128,12 +128,11 @@ export const login = async (req, res) => {
 };
 export const logout = async (req, res) => {
     const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite:
-        process.env.NODE_ENV === "production" ? "none" : "lax",
-      path: "/",
-    };
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        path: "/",
+      };
   
     res.clearCookie("accessToken", cookieOptions);
     res.clearCookie("refreshToken", cookieOptions);
