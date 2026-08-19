@@ -1241,14 +1241,14 @@ const Products = ({ categorySlug = "" }) => {
                   setShowFilters(false)
                 }
                 className={tw(
-                  "vanta-filter-backdrop"
+                  "vanta-filter-backdrop !z-[100]"
                 )}
               />
             )}
 
             <aside
               className={tw(
-                `vanta-collection-sidebar ${
+                `vanta-collection-sidebar !z-[101] ${
                   showFilters
                     ? "is-open"
                     : ""
